@@ -43,17 +43,17 @@ import java.lang.reflect.Type;
  * with the represented client widget. This class provides access to the WebDriver, to the root WebElement,
  * but everything else should be handled by subclasses, or can be dealt with by dealing directly with the
  * WebElement.
- * <p/>
+ * <p>
  * Each GwtWidget may declare a corresponding {@link GwtWidgetFinder} type. This should have a no-arg,
  * public constructor so it can be automatically created, and should follow the basic builder pattern to 
  * enable finding that type of widget in predictable ways.
- * <p/>
+ * <p>
  * The {@code find} methods in this class are used to find some widget using that widget's finder type.
- * <p/>
+ * <p>
  * A GwtWidget subclass may be annotated with {@code @ForWidget}to indicate a specific widget
  * type that it represents. This is used as a check, to make sure that the dom element the GwtWidget wraps
  * is connected to the right type of Widget.
- * <p/>
+ * <p>
  * The {@link #is(Class)} and {@link #as(Class)} methods are modeled after GWT's Element classes, and their
  * checks that any given JavaScriptObject is indeed of the type expected, as a JavaScriptObject can be of
  * any of any type and cast arbitrarily. In the same way, a GwtWidget might be mapped onto any element or
@@ -105,12 +105,14 @@ public class GwtWidget<F extends GwtWidgetFinder<?>> {
 	/**
 	 * Starting point to find a widget using the finder dsl - pass in the GwtWidget subclass and an instance
 	 * of its basic finder will be created, with the current element and driver to act as a starting point.
-	 * <p/>
+	 * <p>
 	 * A find() call is followed by specific invocations on that finder to specify exactly what is being
 	 * found, and is followed by a {@code done()} call, which then tries to find the actual widget.
 	 * 
 	 * @see GwtWidgetFinder
 	 * @param widgetType the type of widget to start finding
+	 * @param <W> the GwtWidget
+	 * @param <T> the type
 	 * @return a finder able to return that type of widget when done() is invoked
 	 */
 	public <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType) {
@@ -120,15 +122,17 @@ public class GwtWidget<F extends GwtWidgetFinder<?>> {
 	/**
 	 * Static helper method to enable finding without an initial widget to start from. Useful to start 
 	 * writing a test or to find some other high level widget to work with.
-	 * <p/>
+	 * <p>
 	 * This method takes no WebElement, but assumes that the body tag from the driver should be used. Invoke
 	 * {@link GwtWidgetFinder#withElement(org.openqa.selenium.WebElement)} to select a different element, or
 	 * use {@link #find(Class, org.openqa.selenium.WebDriver, org.openqa.selenium.WebElement)} instead
 	 * 
 	 * @see #find(Class)
 	 * @see #find(Class, WebDriver, WebElement)
-	 * @param widgetType
+	 * @param widgetType the widget type
 	 * @param driver the WebDriver instance to use when finding
+	 * @param <W> the GwtWidget type
+	 * @param <T> the type
 	 * @return a finder able to return that type of widget when done() is invoked.
 	 */
 	public static <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType, WebDriver driver) {
@@ -143,6 +147,8 @@ public class GwtWidget<F extends GwtWidgetFinder<?>> {
 	 * @param widgetType the type of widget to start finding
 	 * @param driver the WebDriver instance to use when finding
 	 * @param element the element to start finding from
+	 * @param <W> the GwtWidget type
+	 * @param <T> the type
 	 * @return a finder able to return that type of widget when done() is invoked
 	 */
 	public static <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType, WebDriver driver, WebElement element) {
@@ -202,6 +208,7 @@ public class GwtWidget<F extends GwtWidgetFinder<?>> {
 	 * matches the provided class's {@literal @}ForWidget annotation.
 	 * 
 	 * @param clazz the type of widget to create
+	 * @param <W> the GwtWidget type
 	 * @return a new instance of the class wrapping the current element and driver.
 	 * @throws IllegalArgumentException if the element is not of the specified type
 	 */
@@ -237,7 +244,8 @@ public class GwtWidget<F extends GwtWidgetFinder<?>> {
 	/**
 	 * Checks if this widget is of the specified type and so can 
 	 * @param clazz the type of widget to test against
-	 * @return true if this instance wraps an element that 
+	 * @param <W> the GwtWidget type
+	 * @return true if this instance wraps an element that
 	 */
 	public <W extends GwtWidget<?>> boolean is(Class<W> clazz) {
 		ForWidget widgetType = clazz.getAnnotation(ForWidget.class);

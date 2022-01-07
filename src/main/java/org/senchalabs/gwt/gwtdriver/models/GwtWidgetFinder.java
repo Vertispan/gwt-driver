@@ -25,10 +25,11 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.NotFoundException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.internal.WrapsDriver;
+import org.openqa.selenium.WrapsDriver;
 import org.openqa.selenium.support.ui.FluentWait;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 
 public class GwtWidgetFinder<W extends GwtWidget<?>> {
 	protected WebDriver driver;
@@ -54,12 +55,16 @@ public class GwtWidgetFinder<W extends GwtWidget<?>> {
 	}
 
 	public W waitFor() {
-		return waitFor(10, TimeUnit.SECONDS);
+		return waitFor(Duration.ofSeconds(10));
 	}
 
-	public W waitFor(long duration, TimeUnit unit) {
+	public W waitFor(long duration, TemporalUnit unit) {
+    return waitFor(Duration.of(duration, unit));
+	}
+
+	public W waitFor(Duration duration) {
 		return new FluentWait<WebDriver>(driver)
-				.withTimeout(duration, unit)
+				.withTimeout(duration)
 				.ignoring(NotFoundException.class)
 				.until(new Function<WebDriver, W>() {
 			@Override
