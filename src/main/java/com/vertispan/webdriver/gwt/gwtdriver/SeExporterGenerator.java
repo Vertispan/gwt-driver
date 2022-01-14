@@ -209,7 +209,7 @@ public class SeExporterGenerator extends Generator {
           } else if (type.isClass() != null
               && elementalNode != null
               && type.isClass().isAssignableTo(elementalNode)) {
-            sw.print("jsinterop.base.Js.uncheckedCast(args.get(%1$d))", i,
+            sw.print("jsinterop.base.Js.cast(args.get(%1$d))", i,
                 type.getQualifiedSourceName());
           } else if (type.isInterface() != null && oracle.getSingleJsoImplInterfaces()
               .contains(type.isInterface())) {
