@@ -21,12 +21,11 @@ import com.google.gwt.user.client.ui.Widget;
 
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ClientMethodsFactory;
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ExportedMethods;
+import com.vertispan.webdriver.gwt.gwtdriver.models.GwtWidget.ForWidget;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-
-import com.vertispan.webdriver.gwt.gwtdriver.models.GwtWidget.ForWidget;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -39,235 +38,250 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
- * Represents a GWT Widget class. Subclasses should add appropriate methods to enable basic interaction
- * with the represented client widget. This class provides access to the WebDriver, to the root WebElement,
- * but everything else should be handled by subclasses, or can be dealt with by dealing directly with the
- * WebElement.
+ * Represents a GWT Widget class. Subclasses should add appropriate methods to enable basic
+ * interaction with the represented client widget. This class provides access to the WebDriver, to
+ * the root WebElement, but everything else should be handled by subclasses, or can be dealt with by
+ * dealing directly with the WebElement.
  * <p>
- * Each GwtWidget may declare a corresponding {@link GwtWidgetFinder} type. This should have a no-arg,
- * public constructor so it can be automatically created, and should follow the basic builder pattern to 
- * enable finding that type of widget in predictable ways.
+ * Each GwtWidget may declare a corresponding {@link GwtWidgetFinder} type. This should have a
+ * no-arg, public constructor so it can be automatically created, and should follow the basic
+ * builder pattern to enable finding that type of widget in predictable ways.
  * <p>
- * The {@code find} methods in this class are used to find some widget using that widget's finder type.
+ * The {@code find} methods in this class are used to find some widget using that widget's finder
+ * type.
  * <p>
- * A GwtWidget subclass may be annotated with {@code @ForWidget}to indicate a specific widget
- * type that it represents. This is used as a check, to make sure that the dom element the GwtWidget wraps
- * is connected to the right type of Widget.
+ * A GwtWidget subclass may be annotated with {@code @ForWidget}to indicate a specific widget type
+ * that it represents. This is used as a check, to make sure that the dom element the GwtWidget
+ * wraps is connected to the right type of Widget.
  * <p>
- * The {@link #is(Class)} and {@link #as(Class)} methods are modeled after GWT's Element classes, and their
- * checks that any given JavaScriptObject is indeed of the type expected, as a JavaScriptObject can be of
- * any of any type and cast arbitrarily. In the same way, a GwtWidget might be mapped onto any element or
- * widget, even if it doesn't map. The {@link #is(Class)} method allows a test to verify that it is of the
- * type specified, and the {@link #as(Class)} method creates an object of the specified type by wrapping 
- * the current element and driver in the new type. This is usually not required when working with a
- * {@link GwtWidgetFinder} and the {@code find} methods, as those typically only return elements that already
- * match the widget.
- *
+ * The {@link #is(Class)} and {@link #as(Class)} methods are modeled after GWT's Element classes,
+ * and their checks that any given JavaScriptObject is indeed of the type expected, as a
+ * JavaScriptObject can be of any of any type and cast arbitrarily. In the same way, a GwtWidget
+ * might be mapped onto any element or widget, even if it doesn't map. The {@link #is(Class)} method
+ * allows a test to verify that it is of the type specified, and the {@link #as(Class)} method
+ * creates an object of the specified type by wrapping the current element and driver in the new
+ * type. This is usually not required when working with a {@link GwtWidgetFinder} and the {@code
+ * find} methods, as those typically only return elements that already match the widget.
  */
 @ForWidget(Widget.class)
 public class GwtWidget<F extends GwtWidgetFinder<?>> {
-	private final WebDriver driver;
-	private final WebElement element;
-	private final ExportedMethods methods;
+  private final WebDriver driver;
+  private final WebElement element;
+  private final ExportedMethods methods;
 
-	/**
-	 * Creates a new GwtWidget type. Subclasses must invoke this with non-null arguments, and must declare
-	 * (at least) a constructor accepting the same arguments.
-	 * @param driver a webdriver instance to use when interacting with the widget or finding other widgets
-	 * @param element the element to wrap with a GwtDriver instance
-	 */
-	public GwtWidget(WebDriver driver, WebElement element) {
-		assert element != null && driver != null;
-		this.driver = driver;
-		this.element = element;
+  /**
+   * Creates a new GwtWidget type. Subclasses must invoke this with non-null arguments, and must
+   * declare (at least) a constructor accepting the same arguments.
+   *
+   * @param driver a webdriver instance to use when interacting with the widget or finding other
+   * widgets
+   * @param element the element to wrap with a GwtDriver instance
+   */
+  public GwtWidget(WebDriver driver, WebElement element) {
+    assert element != null && driver != null;
+    this.driver = driver;
+    this.element = element;
 
-		methods = ClientMethodsFactory.create(ExportedMethods.class, driver);
+    methods = ClientMethodsFactory.create(ExportedMethods.class, driver);
 
-		assert is(getClass()) : "Not actually a widget, shouldn't be wrapped up as a widget";
-	}
+    assert is(getClass()) : "Not actually a widget, shouldn't be wrapped up as a widget";
+  }
 
-	/**
-	 * Gets the root WebElement being used as a GWT Widget
-	 * @return the root element of this widget
-	 */
-	public WebElement getElement() {
-		return element;
-	}
-	/**
-	 * Gets the current webdriver instance used to interact with this widget. Not typically used except
-	 * internally to avoid passing in a driver in instance methods.
-	 * @return the driver used when creating this widget
-	 */
-	public WebDriver getDriver() {
-		return driver;
-	}
+  /**
+   * Gets the root WebElement being used as a GWT Widget
+   *
+   * @return the root element of this widget
+   */
+  public WebElement getElement() {
+    return element;
+  }
 
-	/**
-	 * Starting point to find a widget using the finder dsl - pass in the GwtWidget subclass and an instance
-	 * of its basic finder will be created, with the current element and driver to act as a starting point.
-	 * <p>
-	 * A find() call is followed by specific invocations on that finder to specify exactly what is being
-	 * found, and is followed by a {@code done()} call, which then tries to find the actual widget.
-	 * 
-	 * @see GwtWidgetFinder
-	 * @param widgetType the type of widget to start finding
-	 * @param <W> the GwtWidget
-	 * @param <T> the type
-	 * @return a finder able to return that type of widget when done() is invoked
-	 */
-	public <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType) {
-		return find(widgetType, getDriver(), getElement());
-	}
+  /**
+   * Gets the current webdriver instance used to interact with this widget. Not typically used
+   * except internally to avoid passing in a driver in instance methods.
+   *
+   * @return the driver used when creating this widget
+   */
+  public WebDriver getDriver() {
+    return driver;
+  }
 
-	/**
-	 * Static helper method to enable finding without an initial widget to start from. Useful to start 
-	 * writing a test or to find some other high level widget to work with.
-	 * <p>
-	 * This method takes no WebElement, but assumes that the body tag from the driver should be used. Invoke
-	 * {@link GwtWidgetFinder#withElement(org.openqa.selenium.WebElement)} to select a different element, or
-	 * use {@link #find(Class, org.openqa.selenium.WebDriver, org.openqa.selenium.WebElement)} instead
-	 * 
-	 * @see #find(Class)
-	 * @see #find(Class, WebDriver, WebElement)
-	 * @param widgetType the widget type
-	 * @param driver the WebDriver instance to use when finding
-	 * @param <W> the GwtWidget type
-	 * @param <T> the type
-	 * @return a finder able to return that type of widget when done() is invoked.
-	 */
-	public static <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType, WebDriver driver) {
-		return find(widgetType, driver, driver.findElement(By.tagName("body")));
-	}
+  /**
+   * Starting point to find a widget using the finder dsl - pass in the GwtWidget subclass and an
+   * instance of its basic finder will be created, with the current element and driver to act as a
+   * starting point.
+   * <p>
+   * A find() call is followed by specific invocations on that finder to specify exactly what is
+   * being found, and is followed by a {@code done()} call, which then tries to find the actual
+   * widget.
+   *
+   * @param widgetType the type of widget to start finding
+   * @param <W> the GwtWidget
+   * @param <T> the type
+   * @return a finder able to return that type of widget when done() is invoked
+   * @see GwtWidgetFinder
+   */
+  public <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType) {
+    return find(widgetType, getDriver(), getElement());
+  }
 
-	/**
-	 * Static helper method to enable finding without an initial widget to work from. Useful to start
-	 * writing a test or to find some other high level widget to work with.
-	 * 
-	 * @see #find(Class)
-	 * @param widgetType the type of widget to start finding
-	 * @param driver the WebDriver instance to use when finding
-	 * @param element the element to start finding from
-	 * @param <W> the GwtWidget type
-	 * @param <T> the type
-	 * @return a finder able to return that type of widget when done() is invoked
-	 */
-	public static <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType, WebDriver driver, WebElement element) {
-		Type i = widgetType;
-		do {
-			if (i instanceof ParameterizedType) {
-				ParameterizedType t = (ParameterizedType) i;
-				if (t.getRawType() == GwtWidget.class) {
-					@SuppressWarnings("unchecked")
-					Class<T> finderType = (Class<T>) t.getActualTypeArguments()[0];
+  /**
+   * Static helper method to enable finding without an initial widget to start from. Useful to start
+   * writing a test or to find some other high level widget to work with.
+   * <p>
+   * This method takes no WebElement, but assumes that the body tag from the driver should be used.
+   * Invoke {@link GwtWidgetFinder#withElement(org.openqa.selenium.WebElement)} to select a
+   * different element, or use {@link #find(Class, org.openqa.selenium.WebDriver,
+   * org.openqa.selenium.WebElement)} instead
+   *
+   * @param widgetType the widget type
+   * @param driver the WebDriver instance to use when finding
+   * @param <W> the GwtWidget type
+   * @param <T> the type
+   * @return a finder able to return that type of widget when done() is invoked.
+   * @see #find(Class)
+   * @see #find(Class, WebDriver, WebElement)
+   */
+  public static <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType,
+      WebDriver driver) {
+    return find(widgetType, driver, driver.findElement(By.tagName("body")));
+  }
 
-					T instance = createInstance(finderType);
-					if (instance != null) {
-						if (driver != null) {
-							instance.withDriver(driver);
-						}
-						if (element != null) {
-							instance.withElement(element);
-						}
-						return instance;
-					}
-				}
-			}
-			i = (i instanceof Class) ? ((Class<?>)i).getGenericSuperclass() : null;
-		} while (i != null);
-		return null;
-	}
+  /**
+   * Static helper method to enable finding without an initial widget to work from. Useful to start
+   * writing a test or to find some other high level widget to work with.
+   *
+   * @param widgetType the type of widget to start finding
+   * @param driver the WebDriver instance to use when finding
+   * @param element the element to start finding from
+   * @param <W> the GwtWidget type
+   * @param <T> the type
+   * @return a finder able to return that type of widget when done() is invoked
+   * @see #find(Class)
+   */
+  public static <W extends GwtWidget<T>, T extends GwtWidgetFinder<W>> T find(Class<W> widgetType,
+      WebDriver driver, WebElement element) {
+    Type i = widgetType;
+    do {
+      if (i instanceof ParameterizedType) {
+        ParameterizedType t = (ParameterizedType) i;
+        if (t.getRawType() == GwtWidget.class) {
+          @SuppressWarnings("unchecked")
+          Class<T> finderType = (Class<T>) t.getActualTypeArguments()[0];
 
-	private static <T extends GwtWidgetFinder<?>> T createInstance(Class<T> type) {
-		try {
-			return type.newInstance();
-		} catch (IllegalAccessException e) {
-			// type/ctor is not public
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// type is abstract, or type doesn't have a no-arg ctor
-			e.printStackTrace();
-		}
-		return null;
-	}
+          T instance = createInstance(finderType);
+          if (instance != null) {
+            if (driver != null) {
+              instance.withDriver(driver);
+            }
+            if (element != null) {
+              instance.withElement(element);
+            }
+            return instance;
+          }
+        }
+      }
+      i = (i instanceof Class) ? ((Class<?>) i).getGenericSuperclass() : null;
+    } while (i != null);
+    return null;
+  }
 
-	/**
-	 * Declares that the annotated type is a GwtWidget for a particular Widget subclass. Allows
-	 * multiple GwtWidget models to target the same client widget type, adding different features.
-	 *
-	 */
-	@Documented
-	@Inherited
-	@Target(ElementType.TYPE)
-	@Retention(RetentionPolicy.RUNTIME)
-	public @interface ForWidget {
-		Class<? extends Widget> value();
-	}
+  private static <T extends GwtWidgetFinder<?>> T createInstance(Class<T> type) {
+    try {
+      return type.newInstance();
+    } catch (IllegalAccessException e) {
+      // type/ctor is not public
+      e.printStackTrace();
+    } catch (InstantiationException e) {
+      // type is abstract, or type doesn't have a no-arg ctor
+      e.printStackTrace();
+    }
+    return null;
+  }
 
-	/**
-	 * Re-wraps the widget's element as some other kind of widget. Requires that the actual widget
-	 * matches the provided class's {@literal @}ForWidget annotation.
-	 * 
-	 * @param clazz the type of widget to create
-	 * @param <W> the GwtWidget type
-	 * @return a new instance of the class wrapping the current element and driver.
-	 * @throws IllegalArgumentException if the element is not of the specified type
-	 */
-	public <W extends GwtWidget<?>> W as(Class<W> clazz) {
-		if (!is(clazz)) {
-			ForWidget widgetType = clazz.getAnnotation(ForWidget.class);
-			throw new IllegalArgumentException("Cannot complete as(" + clazz.getSimpleName() + ".class), element isn't a " + widgetType.value().getName());
-		}
-		try {
-			return clazz.getConstructor(WebDriver.class, WebElement.class).newInstance(getDriver(), getElement());
-		} catch (NoSuchMethodException ex) {
-			//w doesn't have a WebDriver,WebElement ctor
-			ex.printStackTrace();
-		} catch (InstantiationException e) {
-			//w is abstract
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			//w's ctor is protected
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			//ctor params don't match
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			//w's ctor threw an exception
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			//security manager says no
-			e.printStackTrace();
-		}
-		return null;
-	}
+  /**
+   * Declares that the annotated type is a GwtWidget for a particular Widget subclass. Allows
+   * multiple GwtWidget models to target the same client widget type, adding different features.
+   */
+  @Documented
+  @Inherited
+  @Target(ElementType.TYPE)
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface ForWidget {
+    Class<? extends Widget> value();
+  }
 
-	/**
-	 * Checks if this widget is of the specified type and so can 
-	 * @param clazz the type of widget to test against
-	 * @param <W> the GwtWidget type
-	 * @return true if this instance wraps an element that
-	 */
-	public <W extends GwtWidget<?>> boolean is(Class<W> clazz) {
-		ForWidget widgetType = clazz.getAnnotation(ForWidget.class);
-		if (widgetType == null) {
-			throw new IllegalArgumentException("Class " + clazz + " is not annotated with ForWidget, cannot check its type");
-		}
+  /**
+   * Re-wraps the widget's element as some other kind of widget. Requires that the actual widget
+   * matches the provided class's {@literal @}ForWidget annotation.
+   *
+   * @param clazz the type of widget to create
+   * @param <W> the GwtWidget type
+   * @return a new instance of the class wrapping the current element and driver.
+   * @throws IllegalArgumentException if the element is not of the specified type
+   */
+  public <W extends GwtWidget<?>> W as(Class<W> clazz) {
+    if (!is(clazz)) {
+      ForWidget widgetType = clazz.getAnnotation(ForWidget.class);
+      throw new IllegalArgumentException(
+          "Cannot complete as(" + clazz.getSimpleName() + ".class), element isn't a "
+              + widgetType.value().getName());
+    }
+    try {
+      return clazz.getConstructor(WebDriver.class, WebElement.class)
+          .newInstance(getDriver(), getElement());
+    } catch (NoSuchMethodException ex) {
+      //w doesn't have a WebDriver,WebElement ctor
+      ex.printStackTrace();
+    } catch (InstantiationException e) {
+      //w is abstract
+      e.printStackTrace();
+    } catch (IllegalAccessException e) {
+      //w's ctor is protected
+      e.printStackTrace();
+    } catch (IllegalArgumentException e) {
+      //ctor params don't match
+      e.printStackTrace();
+    } catch (InvocationTargetException e) {
+      //w's ctor threw an exception
+      e.printStackTrace();
+    } catch (SecurityException e) {
+      //security manager says no
+      e.printStackTrace();
+    }
+    return null;
+  }
 
-		return  methods.instanceofwidget(element, widgetType.value().getName());
-	}
+  /**
+   * Checks if this widget is of the specified type and so can
+   *
+   * @param clazz the type of widget to test against
+   * @param <W> the GwtWidget type
+   * @return true if this instance wraps an element that
+   */
+  public <W extends GwtWidget<?>> boolean is(Class<W> clazz) {
+    ForWidget widgetType = clazz.getAnnotation(ForWidget.class);
+    if (widgetType == null) {
+      throw new IllegalArgumentException(
+          "Class " + clazz + " is not annotated with ForWidget, cannot check its type");
+    }
 
-	/**
-	 * Helper method to generate a string literal that can be used in an xpath
-	 * @param str a string to be escaped for use as an xpath expression
-	 * @return a properly escaped string 
-	 */
-	protected static String escapeToString(String str) {
-		if (!str.contains("'")) {
-			return "'" + str + "'";
-		}
-		if (!str.contains("\"")) {
-			return "\"" + str + "\"";
-		}
-		return "concat('" + str.replace("\'", "',\"'\",'") +"')";
-	}
+    return methods.instanceofwidget(element, widgetType.value().getName());
+  }
+
+  /**
+   * Helper method to generate a string literal that can be used in an xpath
+   *
+   * @param str a string to be escaped for use as an xpath expression
+   * @return a properly escaped string
+   */
+  protected static String escapeToString(String str) {
+    if (!str.contains("'")) {
+      return "'" + str + "'";
+    }
+    if (!str.contains("\"")) {
+      return "\"" + str + "\"";
+    }
+    return "concat('" + str.replace("\'", "',\"'\",'") + "')";
+  }
 }

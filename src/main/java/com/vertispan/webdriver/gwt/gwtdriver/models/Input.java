@@ -17,37 +17,37 @@
  */
 package com.vertispan.webdriver.gwt.gwtdriver.models;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import com.vertispan.webdriver.gwt.gwtdriver.models.GwtWidget.ForWidget;
-
 import com.google.gwt.user.client.ui.IntegerBox;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.ValueBoxBase;
 
+import com.vertispan.webdriver.gwt.gwtdriver.models.GwtWidget.ForWidget;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+
 /**
- * Simple abstraction to refer to many input widgets in GWT such as {@link TextBox}, 
- * {@link TextArea}, {@link PasswordTextBox}, {@link IntegerBox}, etc. 
+ * Simple abstraction to refer to many input widgets in GWT such as {@link TextBox}, {@link
+ * TextArea}, {@link PasswordTextBox}, {@link IntegerBox}, etc.
  * <p>
  * Has no specialized finder type, as GWT doesn't have anything that clearly and uniformly marks
  * fields as being labeled, or empty text to indicate that nothing has been entered. Users of this
  * library can define their own GwtWidget type with a corresponding finder to rectify this if they
  * have a consistent way that these widgets can be found.
- *
  */
 @ForWidget(ValueBoxBase.class)
-public class Input extends GwtWidget<GwtWidgetFinder<Input>>{
-	public Input(WebDriver driver, WebElement element) {
-		super(driver, element);
-	}
+public class Input extends GwtWidget<GwtWidgetFinder<Input>> {
+  public Input(WebDriver driver, WebElement element) {
+    super(driver, element);
+  }
 
-	public void sendKeys(CharSequence... keys) {
-		getElement().sendKeys(keys);
-	}
+  public void sendKeys(CharSequence... keys) {
+    getElement().sendKeys(keys);
+  }
 
-	public String getValue() {
-		return getElement().getAttribute("value");
-	}
+  public String getValue() {
+    return getElement().getAttribute("value");
+  }
 }

@@ -30,27 +30,27 @@ import com.google.gwt.user.client.ui.TextBox;
 
 public class SimpleWidgetsEP implements EntryPoint {
 
-	@Override
-	public void onModuleLoad() {
+  @Override
+  public void onModuleLoad() {
 
-		RootPanel.get().add(new Label("testing"));
+    RootPanel.get().add(new Label("testing"));
 
-		FlowPanel panel = new FlowPanel();
-		RootPanel.get().add(panel);
+    FlowPanel panel = new FlowPanel();
+    RootPanel.get().add(panel);
 
-		final TextBox textBox = new TextBox();
-		textBox.setValue("asdf");
-		panel.add(textBox);
+    final TextBox textBox = new TextBox();
+    textBox.setValue("asdf");
+    panel.add(textBox);
 
-		panel.add(new Button("Open dialog", new ClickHandler() {
-			@Override
-			public void onClick(ClickEvent event) {
-				DialogBox box = new DialogBox();
-				box.setText("Heading Text For Dialog");
-				box.add(new HTML(textBox.getValue()));
-				box.show();
-			}
-		}));
-	}
+    panel.add(new Button("Open dialog", new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+        DialogBox box = new DialogBox();
+        box.setText("Heading Text For Dialog");
+        box.add(new HTML(textBox.getValue()));
+        box.show();
+      }
+    }));
+  }
 
 }

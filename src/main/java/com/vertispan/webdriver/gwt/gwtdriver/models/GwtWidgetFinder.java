@@ -18,6 +18,7 @@
 package com.vertispan.webdriver.gwt.gwtdriver.models;
 
 import com.google.common.base.Function;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.NotFoundException;
 import org.openqa.selenium.WebDriver;
@@ -29,45 +30,49 @@ import java.time.Duration;
 import java.time.temporal.TemporalUnit;
 
 public class GwtWidgetFinder<W extends GwtWidget<?>> {
-	protected WebDriver driver;
-	protected WebElement elt;
-	public GwtWidgetFinder<W> withDriver(WebDriver driver) {
-		this.driver = driver;
-		if (elt == null) {
-			elt = driver.findElement(By.tagName("body"));
-		}
-		return this;
-	}
-	public GwtWidgetFinder<W> withElement(WebElement element) {
-		if (driver == null && elt instanceof WrapsDriver) {
-			driver = ((WrapsDriver) elt).getWrappedDriver();
-		}
-		this.elt = element;
-		return this;
-	}
-	@SuppressWarnings("unchecked")
-	public W done() {
-		assert getClass() == GwtWidgetFinder.class : "GwtWidgetFinder.done() must be overridden in all subclasses";
-		return (W) new GwtWidget<GwtWidgetFinder<?>>(driver, elt);
-	}
+  protected WebDriver driver;
+  protected WebElement elt;
 
-	public W waitFor() {
-		return waitFor(Duration.ofSeconds(10));
-	}
+  public GwtWidgetFinder<W> withDriver(WebDriver driver) {
+    this.driver = driver;
+    if (elt == null) {
+      elt = driver.findElement(By.tagName("body"));
+    }
+    return this;
+  }
 
-	public W waitFor(long duration, TemporalUnit unit) {
+  public GwtWidgetFinder<W> withElement(WebElement element) {
+    if (driver == null && elt instanceof WrapsDriver) {
+      driver = ((WrapsDriver) elt).getWrappedDriver();
+    }
+    this.elt = element;
+    return this;
+  }
+
+  @SuppressWarnings("unchecked")
+  public W done() {
+    assert getClass()
+        == GwtWidgetFinder.class : "GwtWidgetFinder.done() must be overridden in all subclasses";
+    return (W) new GwtWidget<GwtWidgetFinder<?>>(driver, elt);
+  }
+
+  public W waitFor() {
+    return waitFor(Duration.ofSeconds(10));
+  }
+
+  public W waitFor(long duration, TemporalUnit unit) {
     return waitFor(Duration.of(duration, unit));
-	}
+  }
 
-	public W waitFor(Duration duration) {
-		return new FluentWait<WebDriver>(driver)
-				.withTimeout(duration)
-				.ignoring(NotFoundException.class)
-				.until(new Function<WebDriver, W>() {
-			@Override
-			public W apply(WebDriver webDriver) {
-				return done();
-			}
-		});
-	}
+  public W waitFor(Duration duration) {
+    return new FluentWait<WebDriver>(driver)
+        .withTimeout(duration)
+        .ignoring(NotFoundException.class)
+        .until(new Function<WebDriver, W>() {
+          @Override
+          public W apply(WebDriver webDriver) {
+            return done();
+          }
+        });
+  }
 }

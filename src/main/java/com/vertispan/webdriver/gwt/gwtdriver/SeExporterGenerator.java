@@ -49,169 +49,193 @@ import java.util.List;
  *
  */
 public class SeExporterGenerator extends Generator {
-	private static final String SELENIUM_METHODS = "gwtdriver.methods";
-	@Override
-	public String generate(TreeLogger logger, GeneratorContext context, String typeName) throws UnableToCompleteException {
-		TypeOracle oracle = context.getTypeOracle();
+  private static final String SELENIUM_METHODS = "gwtdriver.methods";
 
-		JClassType jso = oracle.findType(Name.getSourceNameForClass(JavaScriptObject.class));
+  @Override
+  public String generate(TreeLogger logger, GeneratorContext context, String typeName)
+      throws UnableToCompleteException {
+    TypeOracle oracle = context.getTypeOracle();
 
-		JClassType toGenerate = oracle.findType(typeName).isClass();
+    JClassType jso = oracle.findType(Name.getSourceNameForClass(JavaScriptObject.class));
 
-		String packageName = toGenerate.getPackage().getName();
-		String simpleSourceName = toGenerate.getName().replace('.', '_') + "Impl";
-		PrintWriter pw = context.tryCreate(logger, packageName, simpleSourceName);
-		if (pw == null) {
-			return packageName + "." + simpleSourceName;
-		}
+    JClassType toGenerate = oracle.findType(typeName).isClass();
 
-		ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(packageName, simpleSourceName);
-		factory.setSuperclass(typeName);
-		SourceWriter sw = factory.createSourceWriter(context, pw);
+    String packageName = toGenerate.getPackage().getName();
+    String simpleSourceName = toGenerate.getName().replace('.', '_') + "Impl";
+    PrintWriter pw = context.tryCreate(logger, packageName, simpleSourceName);
+    if (pw == null) {
+      return packageName + "." + simpleSourceName;
+    }
 
-		List<String> exportedTypes;
-		try {
-			exportedTypes = context.getPropertyOracle().getConfigurationProperty(SELENIUM_METHODS).getValues();
-		} catch (BadPropertyValueException e) {
-			logger.log(TreeLogger.Type.ERROR, "Can't find any config property for " + SELENIUM_METHODS + " declared", e);
-			throw new UnableToCompleteException();
-		}
-		sw.println("protected void exportRegisteredTypes() {");
-		sw.indent();
-		//for each type set up in a config property,
-		for (String exportedType : exportedTypes) {
-			JClassType toExport = oracle.findType(exportedType);
-			if (toExport == null) {
-				logger.log(TreeLogger.Type.ERROR, "Cannot find " + exportedType + " be sure it is a valid GWT type");
-				throw new UnableToCompleteException();
-			}
-			MethodsFor refersToType = toExport.getAnnotation(MethodsFor.class);
-			if (refersToType == null) {
-				logger.log(Type.ERROR, "Type " + exportedType + " is declared as having webdriver methods, but has no @MethodsFor annotation");
-				throw new UnableToCompleteException();
-			}
-			//verify a default ctor - if not, methods must be static
-			boolean requireStatic = toExport.getConstructors().length != 0 && toExport.findConstructor(new JType[]{}) == null;
-			if (requireStatic) {
-				logger.log(Type.INFO, "No default constructor found, all marked methods must be static");
-			}
-			TreeLogger typeLogger = logger.branch(TreeLogger.Type.DEBUG, "Exporting methods in " + exportedType);
-			//iterate through the methods
-			for (JMethod m : toExport.getInheritableMethods()) {
-				Method refersToMethod = m.getAnnotation(Method.class);
-				if (refersToMethod == null) {
-					continue;
-				}
-				TreeLogger methodLogger = typeLogger.branch(Type.DEBUG, "Examining " + m.getName());
-				if (requireStatic && !m.isStatic()) {
-					typeLogger.log(Type.ERROR, "No default constructor found for " + exportedType + ", can't export instance method" + m.getName());
-					typeLogger.log(Type.ERROR, "Either mark the method as static, or ensure there is a default constructor.");
-					throw new UnableToCompleteException();
-				}
-				//verify that the method matches exactly one method in the webdriver side
-				//TODO make this a little faster
-				String matchingMethod = null;
-				for (java.lang.reflect.Method exportableMethod : refersToType.value().getMethods()) {
-					if (refersToMethod.value().equals(exportableMethod.getName())) {
-						if (matchingMethod != null) {
-							methodLogger.log(Type.ERROR, "Multiple methods found that match " + refersToMethod.value());
-							throw new UnableToCompleteException();
-						}
-						matchingMethod = refersToMethod.value();
-					}
-				}
-				if (matchingMethod == null) {
-					methodLogger.log(Type.ERROR, "Can't find a method that matches " + refersToMethod.value());
-					throw new UnableToCompleteException();
-				}
+    ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(packageName,
+        simpleSourceName);
+    factory.setSuperclass(typeName);
+    SourceWriter sw = factory.createSourceWriter(context, pw);
 
-				//emit a registerFunction call wrapping it
-				sw.println("registerFunction(\"%1$s\", \"%2$s\", new %3$s() {",
-						escape(refersToType.value().getName()),
-						escape(matchingMethod),
-						Name.getSourceNameForClass(Function.class));
-				sw.indent();
-				sw.println("public Object apply(%1$s<?> args) {", Name.getSourceNameForClass(JsArray.class));
-				sw.indent();
-				JType retType = m.getReturnType();
-				if (retType.isPrimitive() != null) {
-					switch (retType.isPrimitive()) {
-						case VOID:
-							//do nothing
-							break;
-						case INT:
-						case DOUBLE:
-						case BOOLEAN:
-							sw.print("return \"\" + ");
-							break;
-						default:
-							methodLogger.log(Type.ERROR, "Can't return primitive " + retType + " from exported method");
-							throw new UnableToCompleteException();
-					}
-				} else if (retType.isClass() != null && retType.getQualifiedSourceName().equals("java.lang.String") ||
-						((retType.isClass() != null) && retType.isClass().isAssignableTo(jso)) ||
-						((retType.isInterface() != null) && oracle.getSingleJsoImplInterfaces().contains(retType))) {
-					sw.print("return ");
-				} else {
-					methodLogger.log(Type.ERROR, "Can't return non-jso, non-supported primitive " + retType + " from exported method");
-					throw new UnableToCompleteException();
-				}
-				if (m.isStatic()) {
-					sw.print(exportedType);
-				} else {
-					sw.print("%1$s.<%2$s>create(%2$s.class)", GWT.class.getName(), exportedType);
-				}
-				sw.print(".%1$s(", matchingMethod);
-				//iterate through the arguments
-				//verify the arg type is legal
-				JType[] erasedParameterTypes = m.getErasedParameterTypes();
-				for (int i = 0; i < erasedParameterTypes.length; i++) {
-					JType type = erasedParameterTypes[i];
+    List<String> exportedTypes;
+    try {
+      exportedTypes = context.getPropertyOracle().getConfigurationProperty(SELENIUM_METHODS)
+          .getValues();
+    } catch (BadPropertyValueException e) {
+      logger.log(TreeLogger.Type.ERROR,
+          "Can't find any config property for " + SELENIUM_METHODS + " declared", e);
+      throw new UnableToCompleteException();
+    }
+    sw.println("protected void exportRegisteredTypes() {");
+    sw.indent();
+    //for each type set up in a config property,
+    for (String exportedType : exportedTypes) {
+      JClassType toExport = oracle.findType(exportedType);
+      if (toExport == null) {
+        logger.log(TreeLogger.Type.ERROR,
+            "Cannot find " + exportedType + " be sure it is a valid GWT type");
+        throw new UnableToCompleteException();
+      }
+      MethodsFor refersToType = toExport.getAnnotation(MethodsFor.class);
+      if (refersToType == null) {
+        logger.log(Type.ERROR, "Type " + exportedType
+            + " is declared as having webdriver methods, but has no @MethodsFor annotation");
+        throw new UnableToCompleteException();
+      }
+      //verify a default ctor - if not, methods must be static
+      boolean requireStatic =
+          toExport.getConstructors().length != 0 && toExport.findConstructor(new JType[]{}) == null;
+      if (requireStatic) {
+        logger.log(Type.INFO, "No default constructor found, all marked methods must be static");
+      }
+      TreeLogger typeLogger = logger.branch(TreeLogger.Type.DEBUG,
+          "Exporting methods in " + exportedType);
+      //iterate through the methods
+      for (JMethod m : toExport.getInheritableMethods()) {
+        Method refersToMethod = m.getAnnotation(Method.class);
+        if (refersToMethod == null) {
+          continue;
+        }
+        TreeLogger methodLogger = typeLogger.branch(Type.DEBUG, "Examining " + m.getName());
+        if (requireStatic && !m.isStatic()) {
+          typeLogger.log(Type.ERROR,
+              "No default constructor found for " + exportedType + ", can't export instance method"
+                  + m.getName());
+          typeLogger.log(Type.ERROR,
+              "Either mark the method as static, or ensure there is a default constructor.");
+          throw new UnableToCompleteException();
+        }
+        //verify that the method matches exactly one method in the webdriver side
+        //TODO make this a little faster
+        String matchingMethod = null;
+        for (java.lang.reflect.Method exportableMethod : refersToType.value().getMethods()) {
+          if (refersToMethod.value().equals(exportableMethod.getName())) {
+            if (matchingMethod != null) {
+              methodLogger.log(Type.ERROR,
+                  "Multiple methods found that match " + refersToMethod.value());
+              throw new UnableToCompleteException();
+            }
+            matchingMethod = refersToMethod.value();
+          }
+        }
+        if (matchingMethod == null) {
+          methodLogger.log(Type.ERROR,
+              "Can't find a method that matches " + refersToMethod.value());
+          throw new UnableToCompleteException();
+        }
 
-					if (type.isPrimitive() != null || type.getQualifiedSourceName().equals("java.lang.String")) {
-						//cast uglyness
-						sw.print("args.<%2$s>cast().get(%1$d)", i, getJsArray(type));
-					} else if (type.isClass() != null && type.isClass().isAssignableTo(jso)) {
-						//normal array plus cast() trickery
-						sw.print("args.get(%1$d).<%2$s>cast()", i, type.getQualifiedSourceName());
-					} else if (type.isInterface() != null && oracle.getSingleJsoImplInterfaces().contains(type.isInterface())) {
-						//single jso cast thing
-						sw.print("args.get(%1$d).<%2$s>cast()", i, oracle.getSingleJsoImpl(type.isInterface()).getQualifiedSourceName());
-					} else {//TODO goktug's magic new jsinterface
-						methodLogger.log(Type.ERROR, "Can't handle argument of type " + type);
-						throw new UnableToCompleteException();
-					}
-					if (i != erasedParameterTypes.length - 1) {
-						sw.println(",");
-					}
-				}
-				sw.println(");");
+        //emit a registerFunction call wrapping it
+        sw.println("registerFunction(\"%1$s\", \"%2$s\", new %3$s() {",
+            escape(refersToType.value().getName()),
+            escape(matchingMethod),
+            Name.getSourceNameForClass(Function.class));
+        sw.indent();
+        sw.println("public Object apply(%1$s<?> args) {",
+            Name.getSourceNameForClass(JsArray.class));
+        sw.indent();
+        JType retType = m.getReturnType();
+        if (retType.isPrimitive() != null) {
+          switch (retType.isPrimitive()) {
+            case VOID:
+              //do nothing
+              break;
+            case INT:
+            case DOUBLE:
+            case BOOLEAN:
+              sw.print("return \"\" + ");
+              break;
+            default:
+              methodLogger.log(Type.ERROR,
+                  "Can't return primitive " + retType + " from exported method");
+              throw new UnableToCompleteException();
+          }
+        } else if (
+            retType.isClass() != null && retType.getQualifiedSourceName().equals("java.lang.String")
+                ||
+                ((retType.isClass() != null) && retType.isClass().isAssignableTo(jso)) ||
+                ((retType.isInterface() != null) && oracle.getSingleJsoImplInterfaces()
+                    .contains(retType))) {
+          sw.print("return ");
+        } else {
+          methodLogger.log(Type.ERROR,
+              "Can't return non-jso, non-supported primitive " + retType + " from exported method");
+          throw new UnableToCompleteException();
+        }
+        if (m.isStatic()) {
+          sw.print(exportedType);
+        } else {
+          sw.print("%1$s.<%2$s>create(%2$s.class)", GWT.class.getName(), exportedType);
+        }
+        sw.print(".%1$s(", matchingMethod);
+        //iterate through the arguments
+        //verify the arg type is legal
+        JType[] erasedParameterTypes = m.getErasedParameterTypes();
+        for (int i = 0; i < erasedParameterTypes.length; i++) {
+          JType type = erasedParameterTypes[i];
 
-				if (m.getReturnType() == JPrimitiveType.VOID) {
-					sw.println("return null;");
-				}
+          if (type.isPrimitive() != null || type.getQualifiedSourceName()
+              .equals("java.lang.String")) {
+            //cast uglyness
+            sw.print("args.<%2$s>cast().get(%1$d)", i, getJsArray(type));
+          } else if (type.isClass() != null && type.isClass().isAssignableTo(jso)) {
+            //normal array plus cast() trickery
+            sw.print("args.get(%1$d).<%2$s>cast()", i, type.getQualifiedSourceName());
+          } else if (type.isInterface() != null && oracle.getSingleJsoImplInterfaces()
+              .contains(type.isInterface())) {
+            //single jso cast thing
+            sw.print("args.get(%1$d).<%2$s>cast()", i,
+                oracle.getSingleJsoImpl(type.isInterface()).getQualifiedSourceName());
+          } else {//TODO goktug's magic new jsinterface
+            methodLogger.log(Type.ERROR, "Can't handle argument of type " + type);
+            throw new UnableToCompleteException();
+          }
+          if (i != erasedParameterTypes.length - 1) {
+            sw.println(",");
+          }
+        }
+        sw.println(");");
 
-				sw.outdent();
-				sw.println("}");
-				sw.outdent();
-				sw.println("});");
-			}
-		}
-		sw.outdent();
-		sw.println("}");
+        if (m.getReturnType() == JPrimitiveType.VOID) {
+          sw.println("return null;");
+        }
 
-		sw.commit(logger);
+        sw.outdent();
+        sw.println("}");
+        sw.outdent();
+        sw.println("});");
+      }
+    }
+    sw.outdent();
+    sw.println("}");
 
-		return factory.getCreatedClassName();	}
+    sw.commit(logger);
 
-	private String getJsArray(JType type) {
-		if (type.getQualifiedSourceName().equals("java.lang.String")) {
-			return Name.getSourceNameForClass(JsArrayString.class);
-		} else if (type == JPrimitiveType.BOOLEAN) {
-			return Name.getSourceNameForClass(JsArrayBoolean.class);
-		} else if (type == JPrimitiveType.INT || type == JPrimitiveType.DOUBLE) {
-			return Name.getSourceNameForClass(JsArrayNumber.class);
-		}
-		return null;
-	}
+    return factory.getCreatedClassName();
+  }
+
+  private String getJsArray(JType type) {
+    if (type.getQualifiedSourceName().equals("java.lang.String")) {
+      return Name.getSourceNameForClass(JsArrayString.class);
+    } else if (type == JPrimitiveType.BOOLEAN) {
+      return Name.getSourceNameForClass(JsArrayBoolean.class);
+    } else if (type == JPrimitiveType.INT || type == JPrimitiveType.DOUBLE) {
+      return Name.getSourceNameForClass(JsArrayNumber.class);
+    }
+    return null;
+  }
 }

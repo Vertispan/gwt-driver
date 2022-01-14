@@ -19,6 +19,8 @@ package com.vertispan.webdriver.gwt.gwtdriver.models;
 
 import com.google.gwt.user.client.ui.RootPanel;
 
+import com.vertispan.webdriver.gwt.gwtdriver.models.Dialog.DialogFinder;
+
 import org.eclipse.jetty.server.NetworkConnector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ResourceHandler;
@@ -31,7 +33,6 @@ import org.openqa.selenium.Point;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
-import com.vertispan.webdriver.gwt.gwtdriver.models.Dialog.DialogFinder;
 
 import java.util.List;
 

@@ -18,15 +18,16 @@
 
 -->
 <module>
-	<inherits name="com.google.gwt.user.User" />
-	<source path="client" />
+  <inherits name="com.google.gwt.user.User"/>
+  <source path="client"/>
 
-	<generate-with class="com.vertispan.webdriver.gwt.gwtdriver.SeExporterGenerator" >
-		<when-type-is class="com.vertispan.webdriver.gwt.gwtdriver.client.SeleniumExporter" />
-	</generate-with>
+  <generate-with class="com.vertispan.webdriver.gwt.gwtdriver.SeExporterGenerator">
+    <when-type-is class="com.vertispan.webdriver.gwt.gwtdriver.client.SeleniumExporter"/>
+  </generate-with>
 
-	<define-configuration-property name="gwtdriver.methods" is-multi-valued="true"/>
-	<extend-configuration-property name="gwtdriver.methods" value="com.vertispan.webdriver.gwt.gwtdriver.client.SeleniumExporter.DefaultExportedMethods"/>
+  <define-configuration-property name="gwtdriver.methods" is-multi-valued="true"/>
+  <extend-configuration-property name="gwtdriver.methods"
+    value="com.vertispan.webdriver.gwt.gwtdriver.client.SeleniumExporter.DefaultExportedMethods"/>
 
-	<entry-point class="com.vertispan.webdriver.gwt.gwtdriver.client.SeleniumExporter" />
+  <entry-point class="com.vertispan.webdriver.gwt.gwtdriver.client.SeleniumExporter"/>
 </module>
