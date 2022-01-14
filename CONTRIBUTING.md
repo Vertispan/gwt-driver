@@ -1,5 +1,5 @@
-#Contributing
-Fork, modify and create a pull against the master. 
+# Contributing
+Fork, modify and create a pull against the main. 
 
-##Formatting
-Use tabs with 4 spaces ending at 120 characters per line. 
+## Formatting
+Use 2 spaces ending at 100 characters per line. 

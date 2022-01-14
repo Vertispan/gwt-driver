@@ -6,19 +6,19 @@
 		<artifactId>oss-parent</artifactId>
 		<version>7</version>
 	</parent>
-	<groupId>org.senchalabs.gwt</groupId>
+	<groupId>com.vertispan.webdriver.gwt</groupId>
 	<artifactId>gwt-driver</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>GWT bindings for WebDriver</name>
 	<inceptionYear>2012</inceptionYear>
 	<organization>
-		<name>Sencha Labs</name>
-		<url>http://senchalabs.org/</url>
+		<name>Vertispan LLC</name>
+		<url>http://www.vertispan.com/</url>
 	</organization>
 	<scm>
-		<connection>scm:git:ssh://git@github.com:niloc132/gwt-driver.git</connection>
-		<developerConnection>scm:git:https://github.com/niloc132/gwt-driver.git</developerConnection>
-		<url>https://github.com/niloc132/gwt-driver</url>
+		<connection>scm:git:ssh://git@github.com:Vertispan/gwt-driver.git</connection>
+		<developerConnection>scm:git:https://github.com/Vertispan/gwt-driver.git</developerConnection>
+		<url>https://github.com/Vertispan/gwt-driver</url>
 	</scm>
 	<licenses>
 		<license>
@@ -202,7 +202,7 @@
 								<argument>com.google.gwt.dev.Compiler</argument>
 								<argument>-war</argument>
 								<argument>${project.build.directory}/www</argument>
-								<argument>org.senchalabs.gwt.gwtdriver.models.SimpleWidgets</argument>
+								<argument>com.vertispan.webdriver.gwt.gwtdriver.models.SimpleWidgets</argument>
 							</arguments>
 						</configuration>
 					</execution>
@@ -227,22 +227,31 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
+				<groupId>com.mycila</groupId>
 				<artifactId>license-maven-plugin</artifactId>
-				<version>1.4</version>
+				<version>3.0</version>
+				<configuration>
+					<mapping>
+						<gss>JAVADOC_STYLE</gss>
+						<java>SLASHSTAR_STYLE</java>
+					</mapping>
+					<includes>
+						<include>**/*.java</include>
+						<include>**/*.gss</include>
+						<include>**/*.gwt.xml</include>
+						<include>**/*.html</include>
+					</includes>
+					<header>LICENSE</header>
+				</configuration>
 				<executions>
 					<execution>
-						<id>license-update</id>
-						<phase>generate-resources</phase>
+						<id>apply-license</id>
+						<phase>process-sources</phase>
 						<goals>
-							<goal>update-file-header</goal>
-							<goal>add-third-party</goal>
+							<goal>format</goal>
 						</goals>
 					</execution>
 				</executions>
-				<configuration>
-					<licenseName>apache_v2</licenseName>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -279,7 +288,7 @@
 		</plugins>
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
