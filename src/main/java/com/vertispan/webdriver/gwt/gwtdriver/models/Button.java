@@ -18,42 +18,44 @@
 package com.vertispan.webdriver.gwt.gwtdriver.models;
 
 import com.google.gwt.user.client.ui.ButtonBase;
+
+import com.vertispan.webdriver.gwt.gwtdriver.by.ByNearestWidget;
+import com.vertispan.webdriver.gwt.gwtdriver.models.Button.ButtonFinder;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.pagefactory.ByChained;
-import com.vertispan.webdriver.gwt.gwtdriver.by.ByNearestWidget;
-import com.vertispan.webdriver.gwt.gwtdriver.models.Button.ButtonFinder;
 
 public class Button extends GwtWidget<ButtonFinder> {
 
-	public Button(WebDriver driver, WebElement element) {
-		super(driver, element);
-	}
+  public Button(WebDriver driver, WebElement element) {
+    super(driver, element);
+  }
 
-	public void click() {
-		getElement().click();
-	}
+  public void click() {
+    getElement().click();
+  }
 
-	public static class ButtonFinder extends GwtWidgetFinder<Button>  {
-		private String text;
+  public static class ButtonFinder extends GwtWidgetFinder<Button> {
+    private String text;
 
-		public ButtonFinder withText(String text) {
-			this.text = text;
-			return this;
-		}
+    public ButtonFinder withText(String text) {
+      this.text = text;
+      return this;
+    }
 
-		@Override
-		public Button done() {
-			WebElement element = elt;
-			if (text != null) {
-				String escaped = escapeToString(text);
-				element = elt.findElement(new ByChained(
-						By.xpath(".//*[contains(text(), "+escaped+")]"),
-						new ByNearestWidget(driver, ButtonBase.class)));
-			}
+    @Override
+    public Button done() {
+      WebElement element = elt;
+      if (text != null) {
+        String escaped = escapeToString(text);
+        element = elt.findElement(new ByChained(
+            By.xpath(".//*[contains(text(), " + escaped + ")]"),
+            new ByNearestWidget(driver, ButtonBase.class)));
+      }
 
-			return new Button(driver, element);
-		}
-	}
+      return new Button(driver, element);
+    }
+  }
 }

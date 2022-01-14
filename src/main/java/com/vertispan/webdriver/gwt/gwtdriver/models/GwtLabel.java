@@ -17,44 +17,46 @@
  */
 package com.vertispan.webdriver.gwt.gwtdriver.models;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import com.google.gwt.user.client.ui.Label;
+
 import com.vertispan.webdriver.gwt.gwtdriver.by.ByNearestWidget;
 import com.vertispan.webdriver.gwt.gwtdriver.by.FasterByChained;
 import com.vertispan.webdriver.gwt.gwtdriver.models.GwtLabel.GwtLabelFinder;
 import com.vertispan.webdriver.gwt.gwtdriver.models.GwtWidget.ForWidget;
 
-import com.google.gwt.user.client.ui.Label;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 @ForWidget(Label.class)
 public class GwtLabel extends GwtWidget<GwtLabelFinder> {
 
-	public GwtLabel(WebDriver driver, WebElement element) {
-		super(driver, element);
-	}
+  public GwtLabel(WebDriver driver, WebElement element) {
+    super(driver, element);
+  }
 
-	public String getText() {
-		return getElement().getText();
-	}
+  public String getText() {
+    return getElement().getText();
+  }
 
-	public static class GwtLabelFinder extends GwtWidgetFinder<GwtLabel> {
-		String text;
-		public GwtLabelFinder withText(String text) {
-			this.text = text;
-			return this;
-		}
+  public static class GwtLabelFinder extends GwtWidgetFinder<GwtLabel> {
+    String text;
 
-		@Override
-		public GwtLabel done() {
-			WebElement elt = this.elt;
-			if (text != null) {
-				elt = elt.findElement(
-						new FasterByChained(By.xpath(".//*[contains(text(), " + escapeToString(text) + ")]"),
-						new ByNearestWidget(driver, Label.class)));
-			}
-			return new GwtLabel(driver, elt);
-		}
-	}
+    public GwtLabelFinder withText(String text) {
+      this.text = text;
+      return this;
+    }
+
+    @Override
+    public GwtLabel done() {
+      WebElement elt = this.elt;
+      if (text != null) {
+        elt = elt.findElement(
+            new FasterByChained(By.xpath(".//*[contains(text(), " + escapeToString(text) + ")]"),
+                new ByNearestWidget(driver, Label.class)));
+      }
+      return new GwtLabel(driver, elt);
+    }
+  }
 
 }

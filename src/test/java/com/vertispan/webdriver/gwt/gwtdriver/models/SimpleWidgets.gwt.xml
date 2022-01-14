@@ -18,14 +18,15 @@
     limitations under the License.
 
 -->
-<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0.rc1//EN" "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0.rc1/distro-source/core/src/gwt-module.dtd">
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0.rc1//EN"
+  "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0.rc1/distro-source/core/src/gwt-module.dtd">
 <module rename-to="simplewidgets">
-	<inherits name="com.google.gwt.user.User" />
-	<inherits name="com.vertispan.webdriver.gwt.gwtdriver.GwtDriver" />
-	
-	<inherits name="com.google.gwt.logging.LoggingDisabled" />
-	
-	<source path="client" />
-	<entry-point class="com.vertispan.webdriver.gwt.gwtdriver.models.client.SimpleWidgetsEP" />
-	<collapse-all-properties />
+  <inherits name="com.google.gwt.user.User"/>
+  <inherits name="com.vertispan.webdriver.gwt.gwtdriver.GwtDriver"/>
+
+  <inherits name="com.google.gwt.logging.LoggingDisabled"/>
+
+  <source path="client"/>
+  <entry-point class="com.vertispan.webdriver.gwt.gwtdriver.models.client.SimpleWidgetsEP"/>
+  <collapse-all-properties/>
 </module>

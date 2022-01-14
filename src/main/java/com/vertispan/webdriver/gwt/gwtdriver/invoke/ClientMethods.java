@@ -21,8 +21,8 @@ package com.vertispan.webdriver.gwt.gwtdriver.invoke;
  *
  */
 public interface ClientMethods {
-	public @interface ClientType {
-		Class<?> value();
-	}
+  public @interface ClientType {
+    Class<?> value();
+  }
 
 }
