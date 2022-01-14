@@ -45,6 +45,8 @@ import com.vertispan.webdriver.gwt.gwtdriver.client.SeleniumExporter.MethodsFor;
 import java.io.PrintWriter;
 import java.util.List;
 
+import jsinterop.annotations.JsType;
+
 /**
  *
  */
@@ -57,6 +59,7 @@ public class SeExporterGenerator extends Generator {
     TypeOracle oracle = context.getTypeOracle();
 
     JClassType jso = oracle.findType(Name.getSourceNameForClass(JavaScriptObject.class));
+    JClassType elementalNode = oracle.findType("elemental2.dom.Node");
 
     JClassType toGenerate = oracle.findType(typeName).isClass();
 
@@ -165,16 +168,24 @@ public class SeExporterGenerator extends Generator {
               throw new UnableToCompleteException();
           }
         } else if (
-            retType.isClass() != null && retType.getQualifiedSourceName().equals("java.lang.String")
-                ||
-                ((retType.isClass() != null) && retType.isClass().isAssignableTo(jso)) ||
-                ((retType.isInterface() != null) && oracle.getSingleJsoImplInterfaces()
-                    .contains(retType))) {
+            retType.isClass() != null
+                && retType.getQualifiedSourceName().equals("java.lang.String")
+                || ((retType.isClass() != null) && retType.isClass().isAssignableTo(jso))
+                || ((retType.isInterface() != null) && oracle.getSingleJsoImplInterfaces()
+                .contains(retType))) {
           sw.print("return ");
         } else {
-          methodLogger.log(Type.ERROR,
-              "Can't return non-jso, non-supported primitive " + retType + " from exported method");
-          throw new UnableToCompleteException();
+          // check for @JsType native classes
+          if (retType.isClass() != null
+              && retType.isClass().getAnnotation(JsType.class) != null
+              && retType.isClass().getAnnotation(JsType.class).isNative()) {
+            sw.print(" return ");
+          } else {
+            methodLogger.log(Type.ERROR,
+                "Can't return non-jso, non-supported primitive " + retType
+                    + " from exported method");
+            throw new UnableToCompleteException();
+          }
         }
         if (m.isStatic()) {
           sw.print(exportedType);
@@ -195,6 +206,11 @@ public class SeExporterGenerator extends Generator {
           } else if (type.isClass() != null && type.isClass().isAssignableTo(jso)) {
             //normal array plus cast() trickery
             sw.print("args.get(%1$d).<%2$s>cast()", i, type.getQualifiedSourceName());
+          } else if (type.isClass() != null
+              && elementalNode != null
+              && type.isClass().isAssignableTo(elementalNode)) {
+            sw.print("jsinterop.base.Js.uncheckedCast(args.get(%1$d))", i,
+                type.getQualifiedSourceName());
           } else if (type.isInterface() != null && oracle.getSingleJsoImplInterfaces()
               .contains(type.isInterface())) {
             //single jso cast thing

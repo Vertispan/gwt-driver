@@ -65,14 +65,9 @@ public class GwtWidgetFinder<W extends GwtWidget<?>> {
   }
 
   public W waitFor(Duration duration) {
-    return new FluentWait<WebDriver>(driver)
+    return new FluentWait<>(driver)
         .withTimeout(duration)
         .ignoring(NotFoundException.class)
-        .until(new Function<WebDriver, W>() {
-          @Override
-          public W apply(WebDriver webDriver) {
-            return done();
-          }
-        });
+        .until((Function<WebDriver, W>) webDriver -> done());
   }
 }

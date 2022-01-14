@@ -45,8 +45,12 @@ public class ByWidget extends By {
   }
 
   public ByWidget(WebDriver driver, Class<? extends Widget> widgetType) {
+    this(driver, widgetType.getName());
+  }
+
+  public ByWidget(WebDriver driver, String className) {
     this.driver = driver;
-    this.type = widgetType.getName();
+    this.type = className;
   }
 
   @Override
