@@ -46,7 +46,7 @@ import java.util.List;
  */
 public class ByNearestWidget extends By {
   private final WebDriver driver;
-  private final Class<?> widget;
+  private final String widgetClassName;
 
   /**
    * Finds the nearest containing widget of any type - anything that extends Widget will be found.
@@ -67,8 +67,21 @@ public class ByNearestWidget extends By {
    * @param type the type of widget to find
    */
   public ByNearestWidget(WebDriver driver, Class<? extends Widget> type) {
-    this.widget = type;
+    this(driver, type.getName());
+  }
+
+  /**
+   * Finds the nearest containing widget of the given type. This will find any subtype of that
+   * widget, allowing you to pass in {@link ValueBoxBase} and find any {@link TextBox}, {@link
+   * TextArea}, {@link IntegerBox}, etc, as these are all subclasses of {@code ValueBoxBase}. Note
+   * that interfaces cannot be used, only base classes, and those classes *must* extend Widget.
+   *
+   * @param driver the driver to use to communicate with the browser
+   * @param widgetClassName the type of widget to find
+   */
+  public ByNearestWidget(WebDriver driver, String widgetClassName) {
     this.driver = driver;
+    this.widgetClassName = widgetClassName;
   }
 
   @Override
@@ -84,7 +97,7 @@ public class ByNearestWidget extends By {
   public WebElement findElement(SearchContext context) {
     WebElement potentialElement = tryFindElement(context);
     if (potentialElement == null) {
-      throw new NoSuchElementException("Cannot find a " + widget.getName() + " in " + context);
+      throw new NoSuchElementException("Cannot find a " + widgetClassName + " in " + context);
     }
     return potentialElement;
   }
@@ -99,13 +112,14 @@ public class ByNearestWidget extends By {
   private WebElement tryFindElement(SearchContext context) {
     WebElement elt = context.findElement(By.xpath("."));
     ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, driver);
-    WebElement potentialElement = m.getContainingWidgetEltOfType(elt, widget.getName());
+    WebElement potentialElement = m.getContainingWidgetEltOfType(elt, widgetClassName);
     return potentialElement;
   }
 
   @Override
   public String toString() {
-    return "ByNearestWidget" + (widget == Widget.class ? "" : " " + widget.getName());
+    return "ByNearestWidget"
+        + (Widget.class.getName().equals(widgetClassName) ? "" : " " + widgetClassName);
   }
 
 }
