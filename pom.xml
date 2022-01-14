@@ -16,6 +16,16 @@
     <name>Vertispan LLC</name>
     <url>http://www.vertispan.com/</url>
   </organization>
+  <developers>
+    <developer>
+      <name>Justin Hickman</name>
+      <email>justin@vertispan.com</email>
+    </developer>
+    <developer>
+      <name>Colin Alworth</name>
+      <email>colin@vertispan.com</email>
+    </developer>
+  </developers>
   <scm>
     <connection>scm:git:ssh://git@github.com:Vertispan/gwt-driver.git</connection>
     <developerConnection>scm:git:https://github.com/Vertispan/gwt-driver.git</developerConnection>
