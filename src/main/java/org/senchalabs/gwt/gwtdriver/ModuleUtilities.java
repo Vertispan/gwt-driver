@@ -47,7 +47,7 @@ public class ModuleUtilities {
 	 * a list of names if any are present - typically will return only one entry, or none if GWT
 	 * isn't in use on this page.
 	 * 
-	 * @param driver
+	 * @param driver the driver
 	 * @return a list of module names
 	 */
 	public static List<String> findModules(WebDriver driver) {

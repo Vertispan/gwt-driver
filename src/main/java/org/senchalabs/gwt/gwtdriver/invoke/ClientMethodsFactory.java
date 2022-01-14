@@ -83,6 +83,7 @@ public class ClientMethodsFactory {
 	 *
 	 * @param type the ClientMethods type to build
 	 * @param driver a webdriver that should be used to communicate with the browser
+	 * @param <T> the type
 	 * @return an instance of the ClientMethods interface given, wired to the first module in the active browser
 	 */
 	public static <T extends ClientMethods> T create(Class<T> type, WebDriver driver) {
@@ -95,6 +96,7 @@ public class ClientMethodsFactory {
 	 * @param type the ClientMethods type to build
 	 * @param driver a webdriver that should be used to communicate with the browser
 	 * @param moduleName the name of the GWT module to connect with
+	 * @param <T> the type
 	 * @return an instance of the ClientMethods interface given, wired to the named module in the active browser
 	 */
 	public static <T extends ClientMethods> T create(Class<T> type, WebDriver driver, String moduleName) {

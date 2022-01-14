@@ -20,124 +20,135 @@ package org.senchalabs.gwt.gwtdriver.models;
  * #L%
  */
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import com.google.gwt.user.client.ui.RootPanel;
 
-import org.junit.Test;
+import org.eclipse.jetty.server.NetworkConnector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Point;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.seleniumhq.jetty7.server.Server;
-import org.seleniumhq.jetty7.server.handler.ResourceHandler;
 import org.senchalabs.gwt.gwtdriver.models.Dialog.DialogFinder;
 
-import com.google.gwt.user.client.ui.RootPanel;
+import java.util.List;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
 
 /**
  * Simple initial tests to make sure the basics pass a smoke test, so lots of manual setup
- *
  */
 public class SimpleWidgetTest {
-	public static class SmokeTestWidget {
-		@Child(type = RootPanel.class)
-		private GwtWidget widget;
-	}
+  public static class SmokeTestWidget {
+    @Child(type = RootPanel.class)
+    private GwtWidget widget;
+  }
 
-	@Test
-	public void testSmokeTestWidget() {
-		SmokeTestWidget test = new SmokeTestWidget();
-
-
-	}
-
-	@Test
-	public void testWithDriver() throws Exception {
-		Server server = null;
-		WebDriver wd = null;
-		try {
-			//start webserver
-			server = new Server(0);
-			ResourceHandler handler = new ResourceHandler();
-			handler.setResourceBase("target/www");
-			handler.setDirectoriesListed(true);
-			server.setHandler(handler);
-
-			server.start();
+  private static Server server;
+  private static String url;
 
 
-			//start up browser
-			DesiredCapabilities cap = new DesiredCapabilities();
-			cap.setBrowserName("firefox");
-			cap.setJavascriptEnabled(true);
-			wd = new HtmlUnitDriver(cap);
-			wd.manage().timeouts().setScriptTimeout(2, TimeUnit.SECONDS);
-			String url = "http://localhost:" + server.getConnectors()[0].getLocalPort() + "/index.html";
-			System.out.println(url);
-			wd.get(url);
+  @BeforeAll
+  static void beforeAll() throws Exception {
+    WebDriverManager.chromedriver().setup();
 
-			WidgetContainer widget = new GwtRootPanel(wd);
-			assert widget.as(GwtRootPanel.class) != null;
+    server = new Server(0);
+    ResourceHandler handler = new ResourceHandler();
+    handler.setResourceBase("target/www");
+    handler.setDirectoriesListed(true);
+    server.setHandler(handler);
 
-			List<GwtWidget<?>> children = widget.findWidgets(By.xpath(".//*"));
-			//RootPanel
-			//*Label
-			//*FlowPanel
-			//**TextBox
-			//**Button
-			assert children.size() == 4 : children.size();
-			
-			//find Label by iterating through sub-widgets and as'ing
-			GwtLabel label = children.get(0).as(GwtLabel.class);
-			assert label != null;
-			assert label.getText().equals("testing") : label.getText();
+    server.start();
 
-			//find label by finder
-			GwtLabel label2 = widget.find(GwtLabel.class).withText("testing").done();
-			assert label2 != null;
-			assert label.getElement().equals(label2.getElement());
-			assert label.getText().equals("testing");
+    //get URL
+    NetworkConnector connector = (NetworkConnector) server.getConnectors()[0];
+    url = "http://localhost:" + connector.getLocalPort() + "/index.html";
+    System.out.println(url);
+  }
 
-			//find, as TextBox as input, verify text and enter new
-			Input textBox = children.get(2).as(Input.class);
-			assert "asdf".equals(textBox.getValue());
-			textBox.sendKeys("fdsa");
+  @AfterAll
+  static void afterAll() throws Exception {
+    if (server != null && server.isRunning()) {
+      server.stop();
+    }
+  }
 
-			//find, click button
-			GwtWidget.find(Button.class, wd).withText("Open dialog").done().click();
+  private ChromeDriver driver;
 
-			//find dialog by heading
-			Dialog headingDialog = new DialogFinder().withHeading("Heading").withDriver(wd).done();
-			assert headingDialog != null;
-			assert headingDialog.getHeadingText().equals("Heading Text For Dialog");
-			//find dialog by top
-			Dialog topDialog = new DialogFinder().atTop().withDriver(wd).done();
-			assert topDialog != null;
-			assert topDialog.getHeadingText().equals("Heading Text For Dialog");
+  @BeforeEach
+  void setup() {
+    ChromeOptions options = new ChromeOptions();
+    options.addArguments("--headless");
+    driver = new ChromeDriver(options);
+  }
 
-			assert headingDialog.getElement().equals(topDialog.getElement());
-			
-			Point initialHeaderLoc = topDialog.getElement().getLocation();
 
-			Actions actions = new Actions(wd);
-			actions.dragAndDrop(topDialog.getHeaderElement(), children.get(3).getElement());
-			actions.build().perform();
-			Point movedHeaderLoc = topDialog.getElement().getLocation();
+  @Test
+  public void testSmokeTestWidget() {
+    SmokeTestWidget test = new SmokeTestWidget();
+  }
 
-			assert !movedHeaderLoc.equals(initialHeaderLoc);
-			//this line is a little screwy in htmlunit
+  @Test
+  public void testWithDriver() throws Exception {
+    driver.get(url);
+
+    WidgetContainer widget = new GwtRootPanel(driver);
+    assert widget.as(GwtRootPanel.class) != null;
+
+    List<GwtWidget<?>> children = widget.findWidgets(By.xpath(".//*"));
+    //RootPanel
+    //*Label
+    //*FlowPanel
+    //**TextBox
+    //**Button
+    assert children.size() == 4 : children.size();
+
+    //find Label by iterating through sub-widgets and as'ing
+    GwtLabel label = children.get(0).as(GwtLabel.class);
+    assert label != null;
+    assert label.getText().equals("testing") : label.getText();
+
+    //find label by finder
+    GwtLabel label2 = widget.find(GwtLabel.class).withText("testing").done();
+    assert label2 != null;
+    assert label.getElement().equals(label2.getElement());
+    assert label.getText().equals("testing");
+
+    //find, as TextBox as input, verify text and enter new
+    Input textBox = children.get(2).as(Input.class);
+    assert "asdf".equals(textBox.getValue());
+    textBox.sendKeys("fdsa");
+
+    //find, click button
+    GwtWidget.find(Button.class, driver).withText("Open dialog").done().click();
+
+    //find dialog by heading
+    Dialog headingDialog = new DialogFinder().withHeading("Heading").withDriver(driver).done();
+    assert headingDialog != null;
+    assert headingDialog.getHeadingText().equals("Heading Text For Dialog");
+    //find dialog by top
+    Dialog topDialog = new DialogFinder().atTop().withDriver(driver).done();
+    assert topDialog != null;
+    assert topDialog.getHeadingText().equals("Heading Text For Dialog");
+
+    assert headingDialog.getElement().equals(topDialog.getElement());
+
+    Point initialHeaderLoc = topDialog.getElement().getLocation();
+
+    Actions actions = new Actions(driver);
+    actions.dragAndDrop(topDialog.getHeaderElement(), children.get(3).getElement());
+    actions.build().perform();
+    Point movedHeaderLoc = topDialog.getElement().getLocation();
+
+    assert !movedHeaderLoc.equals(initialHeaderLoc);
+    //this line is a little screwy in htmlunit
 //			assert movedHeaderLoc.equals(children.get(3).getElement().getLocation());
 
-			assert topDialog.getElement().getText().contains("fdsa");
-		} finally {
-			if (wd != null) {
-				wd.close();
-			}
-			if (server != null) {
-				server.stop();
-			}
-		}
-	}
+    assert topDialog.getElement().getText().contains("fdsa");
+  }
 }
