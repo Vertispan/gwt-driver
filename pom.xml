@@ -193,6 +193,7 @@
 							<goal>exec</goal>
 						</goals>
 						<configuration>
+							<skip>${maven.test.skip}</skip>
 							<executable>java</executable>
 							<classpathScope>test</classpathScope>
 							<arguments>
