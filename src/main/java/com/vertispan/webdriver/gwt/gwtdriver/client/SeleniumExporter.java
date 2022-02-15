@@ -26,10 +26,13 @@ import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.EventListener;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Widget;
 
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ExportedMethods;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -84,23 +87,73 @@ public abstract class SeleniumExporter implements EntryPoint {
 
     @Method("getContainingWidgetEltOfType")
     public Element getContainingWidgetEltOfType(Element elt, String type) {
+      Widget w = findContainingWidget(elt);
+      while (w != null && !isOfType(type, w)) {
+        w = w.getParent();
+      }
+      return w == null ? null : w.getElement();
+    }
+
+    @Method("findDescendantWidgetElementsOfType")
+    public JsArray<Element> findDescendantWidgetElementsOfType(Element elt, String type) {
+      JsArray<Element> result = JsArray.createArray().cast();
+      final Widget rootWidget = findContainingWidget(elt);
+      if (rootWidget == null) {
+        return result;
+      }
+
+      Deque<Widget> nodesToVisit = new ArrayDeque<>();
+      nodesToVisit.push(rootWidget);
+
+      // visit all breadth-first
+      while (!nodesToVisit.isEmpty()) {
+        Widget curr = nodesToVisit.removeFirst();
+        if (curr instanceof HasWidgets) {
+          for (Widget child : ((HasWidgets) curr)) {
+            nodesToVisit.add(child);
+          }
+        }
+        // only push if it's of the right type
+        if (isOfType(type, curr)) {
+          result.push(curr.getElement());
+        }
+      }
+      return result;
+    }
+
+    @Method("findDescendantWidgetElements")
+    public JsArray<Element> findDescendantWidgetElements(Element elt) {
+      return findDescendantWidgetElementsOfType(elt, Widget.class.getName());
+    }
+
+    @Method("findFirstDescendantWidgetElementsOfType")
+    public Element findFirstDescendantWidgetElementsOfType(Element context, String className) {
+      JsArray<Element> widgetEls = findDescendantWidgetElementsOfType(context, className);
+      if (widgetEls.length() == 0) {
+        return null;
+      }
+      return widgetEls.shift();
+    }
+
+    private Widget findContainingWidget(Element elt) {
       EventListener listener = DOM.getEventListener(elt);
-      while (listener instanceof Widget == false) {
+      while (!(listener instanceof Widget)) {
         if (elt == null) {
           return null;
         }
-        elt = elt.getParentElement().cast();
+        com.google.gwt.dom.client.Element parent = elt.getParentElement();
+        if (parent == null) {
+          // parent is null and we didn't find it
+          return null;
+        }
+        elt = parent.cast();
         if (elt == elt.getOwnerDocument().cast()) {
           return null;
         }
         listener = DOM.getEventListener(elt);
       }
-      //found a real widget
-      Widget w = (Widget) listener;
-      while (w != null && !isOfType(type, w)) {
-        w = w.getParent();
-      }
-      return w == null ? null : w.getElement();
+      // found real widget
+      return (Widget) listener;
     }
   }
 

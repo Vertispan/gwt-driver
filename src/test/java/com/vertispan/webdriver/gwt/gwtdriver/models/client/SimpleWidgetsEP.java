@@ -51,6 +51,7 @@ public class SimpleWidgetsEP implements EntryPoint {
         box.show();
       }
     }));
+    panel.add(new Label("Another Label in the panel"));
   }
 
 }

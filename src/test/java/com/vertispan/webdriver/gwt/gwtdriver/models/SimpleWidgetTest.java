@@ -17,8 +17,15 @@
  */
 package com.vertispan.webdriver.gwt.gwtdriver.models;
 
-import com.google.gwt.user.client.ui.RootPanel;
+import static org.junit.jupiter.api.Assertions.*;
 
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
+
+import com.vertispan.webdriver.gwt.gwtdriver.invoke.ClientMethodsFactory;
+import com.vertispan.webdriver.gwt.gwtdriver.invoke.ExportedMethods;
 import com.vertispan.webdriver.gwt.gwtdriver.models.Dialog.DialogFinder;
 
 import org.eclipse.jetty.server.NetworkConnector;
@@ -30,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
@@ -104,7 +112,7 @@ public class SimpleWidgetTest {
     //*FlowPanel
     //**TextBox
     //**Button
-    assert children.size() == 4 : children.size();
+    assert children.size() == 5 : children.size();
 
     //find Label by iterating through sub-widgets and as'ing
     GwtLabel label = children.get(0).as(GwtLabel.class);
@@ -148,5 +156,40 @@ public class SimpleWidgetTest {
 //			assert movedHeaderLoc.equals(children.get(3).getElement().getLocation());
 
     assert topDialog.getElement().getText().contains("fdsa");
+  }
+
+
+  @Test
+  void testFindDescedantWidgets() {
+    driver.get(url);
+
+    WidgetContainer rootPanel = new GwtRootPanel(driver);
+    assert rootPanel.as(GwtRootPanel.class) != null;
+
+    ExportedMethods exportedMethods = ClientMethodsFactory.create(ExportedMethods.class, driver);
+
+    // find all widgets under a context
+    List<WebElement> allWidgetElements = exportedMethods
+        .findDescendantWidgetElements(rootPanel.getElement());
+
+    // should be 6 (including root panel)
+    assertEquals(6, allWidgetElements.size());
+    exportedMethods.instanceofwidget(allWidgetElements.get(1), Label.class.getName());
+    exportedMethods.instanceofwidget(allWidgetElements.get(2), Panel.class.getName());
+    exportedMethods.instanceofwidget(allWidgetElements.get(3), TextBox.class.getName());
+    exportedMethods.instanceofwidget(allWidgetElements.get(4),
+        com.google.gwt.user.client.ui.Button.class.getName());
+    exportedMethods.instanceofwidget(allWidgetElements.get(5), Label.class.getName());
+
+    // find descendant of type
+    List<WebElement> buttons = exportedMethods.findDescendantWidgetElementsOfType(
+        rootPanel.getElement(),
+        com.google.gwt.user.client.ui.Button.class.getName());
+    assertEquals(1, buttons.size());
+
+    // find first widget type
+    WebElement firstLabel = exportedMethods.findFirstDescendantWidgetElementsOfType(
+        rootPanel.getElement(), Label.class.getName());
+    assertEquals("testing", new GwtLabel(driver, firstLabel).getText());
   }
 }
