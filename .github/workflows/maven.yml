@@ -23,5 +23,4 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Build with Maven
-# skip tests for now due to running jetty.  will have to readdress
-      run: mvn -B package -Dmaven.test.skip=true --file pom.xml
+      run: mvn -B package --file pom.xml
