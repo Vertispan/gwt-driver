@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
+import com.vertispan.webdriver.gwt.gwtdriver.by.GwtBy;
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ClientMethodsFactory;
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ExportedMethods;
 import com.vertispan.webdriver.gwt.gwtdriver.models.Dialog.DialogFinder;
@@ -203,7 +204,6 @@ public class SimpleWidgetTest {
         rootPanel.getElement(), Label.class.getName());
     assertEquals("testing", new GwtLabel(driver, firstLabel).getText());
 
-
     // let's validate direct children fetch; only looking in panel2
     WidgetContainer panel2 = rootPanel.findWidget(By.cssSelector(".panel2"))
         .as(WidgetContainer.class);
@@ -212,5 +212,11 @@ public class SimpleWidgetTest {
     exportedMethods.instanceofwidget(panel2Children.get(0), Label.class.getName());
     exportedMethods.instanceofwidget(panel2Children.get(1), Button.class.getName());
     exportedMethods.instanceofwidget(panel2Children.get(2), FlowPanel.class.getName());
+
+    // similar test as above, but using the ByDescendantWidget
+    List<WebElement> elements = driver.findElements(GwtBy.descendantWidget(Label.class));
+    // all labels
+    assertEquals(5, elements.size());
+    System.out.println(elements.size());
   }
 }

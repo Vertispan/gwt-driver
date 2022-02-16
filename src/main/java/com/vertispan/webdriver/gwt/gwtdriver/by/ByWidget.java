@@ -22,62 +22,104 @@ import com.google.gwt.user.client.ui.Widget;
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ClientMethodsFactory;
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ExportedMethods;
 
-import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.internal.Require;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * GWT-specific {@code By} implementation that looks for widgets that in the current search context.
+ * GWT-specific {@code By} implementation that identifies if the current search context is a Widget.
  * Use in conjunction with other {@code By} statements to look for widgets that match a certain
  * criteria.
+ * <p>
+ * This implementation will only look at the current context and will not search surrounding
+ * elements.
  */
-public class ByWidget extends By {
-  private final WebDriver driver;
+public class ByWidget extends GwtBy {
   private final String type;
 
+  /**
+   * Checks if context is a widget of any type - anything that extends Widget will be found.
+   */
+  public ByWidget() {
+    this((WebDriver) null);
+  }
+
+  /**
+   * Checks if context is a widget of any type - anything that extends Widget will be found.
+   *
+   * @param driver The driver to use to communicate with the browser.
+   */
   public ByWidget(WebDriver driver) {
     this(driver, Widget.class);
   }
 
+  /**
+   * Checks if context is a widget of the given type.
+   *
+   * @param widgetType The type of widget to validate against
+   */
+  public ByWidget(Class<? extends Widget> widgetType) {
+    this(widgetType.getName());
+  }
+
+  /**
+   * Checks if context is a widget of the given type.
+   *
+   * @param driver The driver to use to communicate with the browser.
+   * @param widgetType The type of widget to validate against
+   */
   public ByWidget(WebDriver driver, Class<? extends Widget> widgetType) {
     this(driver, widgetType.getName());
   }
 
-  public ByWidget(WebDriver driver, String className) {
-    this.driver = driver;
-    this.type = className;
+  /**
+   * Checks if context is a widget of the given type.
+   *
+   * @param widgetClassName The type of widget to validate against
+   */
+  public ByWidget(String widgetClassName) {
+    this(null, widgetClassName);
+  }
+
+  /**
+   * Checks if context is a widget of the given type.
+   *
+   * @param driver The driver to use to communicate with the browser.
+   * @param widgetClassName The type of widget to validate against
+   */
+  public ByWidget(WebDriver driver, String widgetClassName) {
+    super(driver);
+    this.type = widgetClassName;
   }
 
   @Override
   public List<WebElement> findElements(SearchContext context) {
-    List<WebElement> elts = context.findElements(By.xpath("."));
+    Require.nonNull("Search Context", context);
+    WebElement contextElem = toWebElement(context);
 
-    List<WebElement> ret = new ArrayList<WebElement>();
-    ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, driver);
-    for (WebElement elt : elts) {
-      if (m.instanceofwidget(elt, type)) {
-        ret.add(elt);
-      }
+    ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, getDriver(context));
+    if (m.instanceofwidget(contextElem, type)) {
+      return Collections.singletonList(contextElem);
     }
 
-    return ret;
+    return Collections.emptyList();
   }
 
   @Override
   public WebElement findElement(SearchContext context) {
-    List<WebElement> elts = context.findElements(By.xpath("."));
+    Require.nonNull("Search Context", context);
+    final WebElement contextElement = toWebElement(context);
 
-    ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, driver);
-    for (WebElement elt : elts) {
-      if (m.instanceofwidget(elt, type)) {
-        return elt;
-      }
+    ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, getDriver(context));
+    if (m.instanceofwidget(contextElement, type)) {
+      return contextElement;
     }
+
     throw new NoSuchElementException("Can't find widget of type " + type);
   }
 
