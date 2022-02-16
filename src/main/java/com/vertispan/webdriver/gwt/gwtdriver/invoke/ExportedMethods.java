@@ -37,6 +37,13 @@ public interface ExportedMethods extends ClientMethods {
 //	String instanceOf(String type, Object instance);
 
   /**
+   * Returns all children of the Widget associated with context.
+   *
+   * If the widget is null or does not implement HasWidgets, an empty list will be returned.
+   */
+  List<WebElement> getChildren(WebElement context);
+
+  /**
    * Finds all descendant Widget elements below the context element matching className type.
    * <p>
    * This method will first find the nearest Widget from the context (going up the parent chain

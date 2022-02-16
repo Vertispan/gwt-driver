@@ -222,6 +222,7 @@
             <include>**/*.java</include>
             <include>**/*.gss</include>
             <include>**/*.gwt.xml</include>
+            <include>**/*.ui.xml</include>
             <include>**/*.html</include>
           </includes>
           <header>LICENSE</header>

@@ -19,8 +19,8 @@ package com.vertispan.webdriver.gwt.gwtdriver.models;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -50,6 +50,10 @@ import io.github.bonigarcia.wdm.WebDriverManager;
  * Simple initial tests to make sure the basics pass a smoke test, so lots of manual setup
  */
 public class SimpleWidgetTest {
+
+  // a bit dumb as this will have to be updated every time the test UI changes
+  private static final int TOTAL_WIDGET_COUNT = 13;
+
   public static class SmokeTestWidget {
     @Child(type = RootPanel.class)
     private GwtWidget widget;
@@ -103,31 +107,37 @@ public class SimpleWidgetTest {
   public void testWithDriver() throws Exception {
     driver.get(url);
 
-    WidgetContainer widget = new GwtRootPanel(driver);
-    assert widget.as(GwtRootPanel.class) != null;
+    WidgetContainer rootPanel = new GwtRootPanel(driver);
+    assert rootPanel.as(GwtRootPanel.class) != null;
 
-    List<GwtWidget<?>> children = widget.findWidgets(By.xpath(".//*"));
+    List<GwtWidget<?>> children = rootPanel.findWidgets(By.xpath(".//*"));
     //RootPanel
     //*Label
-    //*FlowPanel
-    //**TextBox
-    //**Button
-    assert children.size() == 5 : children.size();
+    //*UIBINDER Internals
+
+    // growing tests will be difficult to narrow down an exact count without having to continually
+    // update this value.
+    assertEquals(TOTAL_WIDGET_COUNT, children.size());
 
     //find Label by iterating through sub-widgets and as'ing
     GwtLabel label = children.get(0).as(GwtLabel.class);
-    assert label != null;
-    assert label.getText().equals("testing") : label.getText();
+    assertNotNull(label);
+    assertEquals("testing", label.getText());
 
     //find label by finder
-    GwtLabel label2 = widget.find(GwtLabel.class).withText("testing").done();
-    assert label2 != null;
-    assert label.getElement().equals(label2.getElement());
-    assert label.getText().equals("testing");
+    GwtLabel label2 = rootPanel.find(GwtLabel.class).withText("testing").done();
+    assertNotNull(label2);
+    assertEquals(label.getElement(), label2.getElement());
+    assertEquals("testing", label2.getText());
+
+    // find panel1 that contains form, button for dialog
+    WidgetContainer panel1 = rootPanel.findWidget(By.cssSelector(".panel1"))
+        .as(WidgetContainer.class);
+    List<GwtWidget<?>> panel1Children = panel1.findWidgets(By.xpath(".//*"));
 
     //find, as TextBox as input, verify text and enter new
-    Input textBox = children.get(2).as(Input.class);
-    assert "asdf".equals(textBox.getValue());
+    Input textBox = panel1Children.get(0).as(Input.class);
+    assertEquals("asdf", textBox.getValue());
     textBox.sendKeys("fdsa");
 
     //find, click button
@@ -135,14 +145,15 @@ public class SimpleWidgetTest {
 
     //find dialog by heading
     Dialog headingDialog = new DialogFinder().withHeading("Heading").withDriver(driver).done();
-    assert headingDialog != null;
-    assert headingDialog.getHeadingText().equals("Heading Text For Dialog");
+    assertNotNull(headingDialog);
+    assertEquals("Heading Text For Dialog", headingDialog.getHeadingText());
+
     //find dialog by top
     Dialog topDialog = new DialogFinder().atTop().withDriver(driver).done();
-    assert topDialog != null;
-    assert topDialog.getHeadingText().equals("Heading Text For Dialog");
+    assertNotNull(topDialog);
+    assertEquals("Heading Text For Dialog", topDialog.getHeadingText());
 
-    assert headingDialog.getElement().equals(topDialog.getElement());
+    assertEquals(topDialog.getElement(), headingDialog.getElement());
 
     Point initialHeaderLoc = topDialog.getElement().getLocation();
 
@@ -151,11 +162,8 @@ public class SimpleWidgetTest {
     actions.build().perform();
     Point movedHeaderLoc = topDialog.getElement().getLocation();
 
-    assert !movedHeaderLoc.equals(initialHeaderLoc);
-    //this line is a little screwy in htmlunit
-//			assert movedHeaderLoc.equals(children.get(3).getElement().getLocation());
-
-    assert topDialog.getElement().getText().contains("fdsa");
+    assertNotEquals(initialHeaderLoc, movedHeaderLoc);
+    assertTrue(topDialog.getElement().getText().contains("fdsa"));
   }
 
 
@@ -164,32 +172,45 @@ public class SimpleWidgetTest {
     driver.get(url);
 
     WidgetContainer rootPanel = new GwtRootPanel(driver);
-    assert rootPanel.as(GwtRootPanel.class) != null;
+    assertNotNull(rootPanel.as(GwtRootPanel.class));
 
     ExportedMethods exportedMethods = ClientMethodsFactory.create(ExportedMethods.class, driver);
 
+    // let's get the panel1 and only look under it
+    WidgetContainer panel1 = rootPanel.findWidget(By.cssSelector(".panel1"))
+        .as(WidgetContainer.class);
+
     // find all widgets under a context
     List<WebElement> allWidgetElements = exportedMethods
-        .findDescendantWidgetElements(rootPanel.getElement());
+        .findDescendantWidgetElements(panel1.getElement());
 
-    // should be 6 (including root panel)
-    assertEquals(6, allWidgetElements.size());
-    exportedMethods.instanceofwidget(allWidgetElements.get(1), Label.class.getName());
-    exportedMethods.instanceofwidget(allWidgetElements.get(2), Panel.class.getName());
-    exportedMethods.instanceofwidget(allWidgetElements.get(3), TextBox.class.getName());
-    exportedMethods.instanceofwidget(allWidgetElements.get(4),
+    // should be TOTAL_WIDGET_COUNT (excludes the parent panel)
+    assertEquals(3, allWidgetElements.size());
+    exportedMethods.instanceofwidget(allWidgetElements.get(0), TextBox.class.getName());
+    exportedMethods.instanceofwidget(allWidgetElements.get(1),
         com.google.gwt.user.client.ui.Button.class.getName());
-    exportedMethods.instanceofwidget(allWidgetElements.get(5), Label.class.getName());
+    exportedMethods.instanceofwidget(allWidgetElements.get(2), Label.class.getName());
 
     // find descendant of type
     List<WebElement> buttons = exportedMethods.findDescendantWidgetElementsOfType(
-        rootPanel.getElement(),
+        panel1.getElement(),
         com.google.gwt.user.client.ui.Button.class.getName());
     assertEquals(1, buttons.size());
 
-    // find first widget type
+    // find first widget type; using root panel as the context as we know the first
+    // widget is the label we're expecting
     WebElement firstLabel = exportedMethods.findFirstDescendantWidgetElementsOfType(
         rootPanel.getElement(), Label.class.getName());
     assertEquals("testing", new GwtLabel(driver, firstLabel).getText());
+
+
+    // let's validate direct children fetch; only looking in panel2
+    WidgetContainer panel2 = rootPanel.findWidget(By.cssSelector(".panel2"))
+        .as(WidgetContainer.class);
+    List<WebElement> panel2Children = exportedMethods.getChildren(panel2.getElement());
+    assertEquals(3, panel2Children.size());
+    exportedMethods.instanceofwidget(panel2Children.get(0), Label.class.getName());
+    exportedMethods.instanceofwidget(panel2Children.get(1), Button.class.getName());
+    exportedMethods.instanceofwidget(panel2Children.get(2), FlowPanel.class.getName());
   }
 }

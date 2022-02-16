@@ -94,6 +94,22 @@ public abstract class SeleniumExporter implements EntryPoint {
       return w == null ? null : w.getElement();
     }
 
+    @Method("getChildren")
+    public JsArray<Element> getChildren(Element elt) {
+      Widget w = findContainingWidget(elt);
+      JsArray<Element> result = JsArray.createArray().cast();
+      if (!(w instanceof HasWidgets)) {
+        // null or not subtype of HasWidgets; so no children
+        return result;
+      }
+
+      for (Widget child : (HasWidgets) w) {
+        result.push(child.getElement());
+      }
+
+      return result;
+    }
+
     @Method("findDescendantWidgetElementsOfType")
     public JsArray<Element> findDescendantWidgetElementsOfType(Element elt, String type) {
       JsArray<Element> result = JsArray.createArray().cast();
@@ -113,8 +129,8 @@ public abstract class SeleniumExporter implements EntryPoint {
             nodesToVisit.add(child);
           }
         }
-        // only push if it's of the right type
-        if (isOfType(type, curr)) {
+        // only push if it's of the right type ; skip rootWidget
+        if (curr != rootWidget && isOfType(type, curr)) {
           result.push(curr.getElement());
         }
       }
