@@ -22,30 +22,28 @@ import com.google.gwt.user.client.ui.Widget;
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ClientMethodsFactory;
 import com.vertispan.webdriver.gwt.gwtdriver.invoke.ExportedMethods;
 
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.internal.Require;
 
 import java.util.List;
-
+import java.util.stream.Collectors;
 
 /**
- * GWT specific {@code By} implementation that finds descendant widgets.
+ * GWT specific {@code By} implementation that gets the direct child Widgets.
  * <p>
- * As this {@code By} calls the GWT module itself, it will only locate descendants if the {@link
- * com.google.gwt.user.client.ui.HasWidgets} hierarchy is setup correctly.  For example, if a Widget
- * takes the Element from another Widget, but does not implement HasWidgets, this {@code By} will
- * not locate the other Widget.
+ * As this {@code By} calls the GWT module itself, it will only return children if the {@link
+ * com.google.gwt.user.client.ui.HasWidgets} interface is implemented by the Widget associated with
+ * the searchContext.
  */
-public class ByDescendantWidget extends GwtBy {
-  private final String type;
+public class ByWidgetChildren extends GwtBy {
+  private final String widgetClassName;
 
   /**
-   * Finds the descendant Widgets of any type - anything that extends Widget will be found.
+   * Finds the child Widgets of any type - anything that extends Widget will be found.
    */
-  public ByDescendantWidget() {
+  public ByWidgetChildren() {
     this((WebDriver) null);
   }
 
@@ -54,7 +52,7 @@ public class ByDescendantWidget extends GwtBy {
    *
    * @param driver The driver to use to communicate with the browser.
    */
-  public ByDescendantWidget(WebDriver driver) {
+  public ByWidgetChildren(WebDriver driver) {
     this(driver, Widget.class);
   }
 
@@ -69,7 +67,7 @@ public class ByDescendantWidget extends GwtBy {
    *
    * @param widgetType The type of widget to find
    */
-  public ByDescendantWidget(Class<? extends Widget> widgetType) {
+  public ByWidgetChildren(Class<? extends Widget> widgetType) {
     this(widgetType.getName());
   }
 
@@ -85,7 +83,7 @@ public class ByDescendantWidget extends GwtBy {
    * @param driver The driver to use to communicate with the browser.
    * @param widgetType The type of widget to find
    */
-  public ByDescendantWidget(WebDriver driver, Class<? extends Widget> widgetType) {
+  public ByWidgetChildren(WebDriver driver, Class<? extends Widget> widgetType) {
     this(driver, widgetType.getName());
   }
 
@@ -100,7 +98,7 @@ public class ByDescendantWidget extends GwtBy {
    *
    * @param widgetClassName The type of widget to find
    */
-  public ByDescendantWidget(String widgetClassName) {
+  public ByWidgetChildren(String widgetClassName) {
     this(null, widgetClassName);
   }
 
@@ -116,39 +114,19 @@ public class ByDescendantWidget extends GwtBy {
    * @param driver The driver to use to communicate with the browser.
    * @param widgetClassName The type of widget to find
    */
-  public ByDescendantWidget(WebDriver driver, String widgetClassName) {
+  public ByWidgetChildren(WebDriver driver, String widgetClassName) {
     super(driver);
-    this.type = widgetClassName;
+    this.widgetClassName = widgetClassName;
   }
-
 
   @Override
   public List<WebElement> findElements(SearchContext context) {
     Require.nonNull("Search Context", context);
     final WebElement contextElem = toWebElement(context);
-
     ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, getDriver(context));
-    // could return empty list
-    return m.findDescendantWidgetElementsOfType(contextElem, type);
-  }
-
-  @Override
-  public WebElement findElement(SearchContext context) {
-    Require.nonNull("Search Context", context);
-    final WebElement contextElem = toWebElement(context);
-
-    ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, getDriver(context));
-    WebElement first = m.findFirstDescendantWidgetElementsOfType(contextElem, type);
-    if (first == null) {
-      throw new NoSuchElementException("Cannot find widget of type " + type);
-    }
-    return first;
-  }
-
-  @Override
-  public String toString() {
-    return "ByDescendantWidget{" +
-        "type='" + type + '\'' +
-        '}';
+    return m.getChildren(contextElem)
+        .stream()
+        .filter(el -> m.instanceofwidget(el, widgetClassName))
+        .collect(Collectors.toList());
   }
 }
