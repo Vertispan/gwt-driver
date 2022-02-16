@@ -31,6 +31,7 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.internal.Require;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,9 +45,15 @@ import java.util.List;
  * descendent element that is a widget, use another By to find those elements along with a {@code
  * ByWidget} to confirm it is a widget.
  */
-public class ByNearestWidget extends By {
-  private final WebDriver driver;
+public class ByNearestWidget extends GwtBy {
   private final String widgetClassName;
+
+  /**
+   * Finds the nearest containing widget of any type - anything that extends Widget will be found.
+   */
+  public ByNearestWidget() {
+    this((WebDriver) null, Widget.class);
+  }
 
   /**
    * Finds the nearest containing widget of any type - anything that extends Widget will be found.
@@ -55,6 +62,18 @@ public class ByNearestWidget extends By {
    */
   public ByNearestWidget(WebDriver driver) {
     this(driver, Widget.class);
+  }
+
+  /**
+   * Finds the nearest containing widget of the given type. This will find any subtype of that
+   * widget, allowing you to pass in {@link ValueBoxBase} and find any {@link TextBox}, {@link
+   * TextArea}, {@link IntegerBox}, etc, as these are all subclasses of {@code ValueBoxBase}. Note
+   * that interfaces cannot be used, only base classes, and those classes *must* extend Widget.
+   *
+   * @param type the type of widget to find
+   */
+  public ByNearestWidget(Class<? extends Widget> type) {
+    this(type.getName());
   }
 
   /**
@@ -76,16 +95,29 @@ public class ByNearestWidget extends By {
    * TextArea}, {@link IntegerBox}, etc, as these are all subclasses of {@code ValueBoxBase}. Note
    * that interfaces cannot be used, only base classes, and those classes *must* extend Widget.
    *
+   * @param widgetClassName the type of widget to find
+   */
+  public ByNearestWidget(String widgetClassName) {
+    this(null, widgetClassName);
+  }
+
+  /**
+   * Finds the nearest containing widget of the given type. This will find any subtype of that
+   * widget, allowing you to pass in {@link ValueBoxBase} and find any {@link TextBox}, {@link
+   * TextArea}, {@link IntegerBox}, etc, as these are all subclasses of {@code ValueBoxBase}. Note
+   * that interfaces cannot be used, only base classes, and those classes *must* extend Widget.
+   *
    * @param driver the driver to use to communicate with the browser
    * @param widgetClassName the type of widget to find
    */
   public ByNearestWidget(WebDriver driver, String widgetClassName) {
-    this.driver = driver;
+    super(driver);
     this.widgetClassName = widgetClassName;
   }
 
   @Override
   public List<WebElement> findElements(SearchContext context) {
+    Require.nonNull("Search Context", context);
     WebElement elt = tryFindElement(context);
     if (elt != null) {
       return Collections.singletonList(elt);
@@ -95,6 +127,7 @@ public class ByNearestWidget extends By {
 
   @Override
   public WebElement findElement(SearchContext context) {
+    Require.nonNull("Search Context", context);
     WebElement potentialElement = tryFindElement(context);
     if (potentialElement == null) {
       throw new NoSuchElementException("Cannot find a " + widgetClassName + " in " + context);
@@ -111,7 +144,7 @@ public class ByNearestWidget extends By {
    */
   private WebElement tryFindElement(SearchContext context) {
     WebElement elt = context.findElement(By.xpath("."));
-    ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, driver);
+    ExportedMethods m = ClientMethodsFactory.create(ExportedMethods.class, getDriver(context));
     WebElement potentialElement = m.getContainingWidgetEltOfType(elt, widgetClassName);
     return potentialElement;
   }
@@ -121,5 +154,4 @@ public class ByNearestWidget extends By {
     return "ByNearestWidget"
         + (Widget.class.getName().equals(widgetClassName) ? "" : " " + widgetClassName);
   }
-
 }

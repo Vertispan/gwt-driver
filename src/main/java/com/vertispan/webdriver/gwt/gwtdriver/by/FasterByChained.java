@@ -35,7 +35,7 @@ import java.util.List;
  * Using this class should be functionally eqivelent to using ByChained, except faster in some
  * cases.
  */
-public class FasterByChained extends By {
+public class FasterByChained extends GwtBy {
   private By[] bys;
 
   public FasterByChained(By... bys) {

@@ -212,19 +212,55 @@
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>3.0</version>
+        <version>4.2.rc2</version>
         <configuration>
           <mapping>
             <gss>JAVADOC_STYLE</gss>
             <java>SLASHSTAR_STYLE</java>
           </mapping>
-          <includes>
-            <include>**/*.java</include>
-            <include>**/*.gss</include>
-            <include>**/*.gwt.xml</include>
-            <include>**/*.html</include>
-          </includes>
-          <header>LICENSE</header>
+
+          <licenseSets>
+            <licenseSet>
+              <header>LICENSE_VERTISPAN</header>
+              <includes>
+                <include>**/*.java</include>
+                <include>**/*.gss</include>
+                <include>**/*.gwt.xml</include>
+                <include>**/*.ui.xml</include>
+                <include>**/*.html</include>
+              </includes>
+            </licenseSet>
+            <licenseSet>
+              <header>LICENSE</header>
+              <!-- grandfathered -->
+              <includes>
+                <include>**/Button.java</include>
+                <include>**/ByNearestWidget.java</include>
+                <include>**/ByWidget.java</include>
+                <include>**/CheatingByChained.java</include>
+                <include>**/Child.java</include>
+                <include>**/ClientMethods.java</include>
+                <include>**/ClientMethodsFactory.java</include>
+                <include>**/Dialog.java</include>
+                <include>**/ExportedMethods.java</include>
+                <include>**/FasterByChained.java</include>
+                <include>**/GwtDriver.gwt.xml</include>
+                <include>**/GwtLabel.java</include>
+                <include>**/GwtRootPanel.java</include>
+                <include>**/GwtWidget.java</include>
+                <include>**/GwtWidgetFinder.java</include>
+                <include>**/Input.java</include>
+                <include>**/ModuleUtilities.java</include>
+                <include>**/SeExporterGenerator.java</include>
+                <include>**/SeleniumExporter.java</include>
+                <include>**/SimpleWidgetTest.java</include>
+                <include>**/SimpleWidgets.gwt.xml</include>
+                <include>**/SimpleWidgetsEP.java</include>
+                <include>**/WidgetContainer.java</include>
+                <include>**/index.html</include>
+              </includes>
+            </licenseSet>
+          </licenseSets>
         </configuration>
         <executions>
           <execution>

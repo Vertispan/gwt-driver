@@ -33,7 +33,7 @@ import java.util.List;
  * When running {@link SearchContext#findElements} to search for multiple items, uses ByChained
  * normal.
  */
-public class CheatingByChained extends By {
+public class CheatingByChained extends GwtBy {
   private By[] bys;
 
   public CheatingByChained(By... bys) {

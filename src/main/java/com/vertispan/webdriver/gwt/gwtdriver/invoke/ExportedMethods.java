@@ -19,6 +19,8 @@ package com.vertispan.webdriver.gwt.gwtdriver.invoke;
 
 import org.openqa.selenium.WebElement;
 
+import java.util.List;
+
 public interface ExportedMethods extends ClientMethods {
   boolean isWidget(WebElement elt);
 
@@ -33,4 +35,45 @@ public interface ExportedMethods extends ClientMethods {
 //	String getClass(Object obj);
 
 //	String instanceOf(String type, Object instance);
+
+  /**
+   * Returns all children of the Widget associated with context.
+   *
+   * If the widget is null or does not implement HasWidgets, an empty list will be returned.
+   */
+  List<WebElement> getChildren(WebElement context);
+
+  /**
+   * Finds all descendant Widget elements below the context element matching className type.
+   * <p>
+   * This method will first find the nearest Widget from the context (going up the parent chain
+   * until it finds a Widget). From there, it will recursively traverse (breadth-first traversal) of
+   * all HasWidget types.
+   * <p>
+   * Will return empty list if context is null or unable to find a Widget from context element.
+   * <p>
+   * If nearest Widget to context element is not instanceof {@link com.google.gwt.user.client.ui.HasWidgets},
+   * this will return a single item; the Widget element.
+   */
+  List<WebElement> findDescendantWidgetElementsOfType(WebElement context, String className);
+
+  /**
+   * Finds all descendant Widget elements below the context element.
+   * <p>
+   * This method will first find the nearest Widget from the context (going up the parent chain
+   * until it finds a Widget). From there, it will recursively traverse (breadth-first traversal) of
+   * all HasWidget types.
+   * <p>
+   * Will return empty list if context is null or unable to find a Widget from context element.
+   * <p>
+   * If nearest Widget to context element is not instanceof {@link com.google.gwt.user.client.ui.HasWidgets},
+   * this will return a single item; the Widget element.
+   */
+  List<WebElement> findDescendantWidgetElements(WebElement context);
+
+  /**
+   * Finds the first descendant Widget element below the context element matching className type;
+   * breadth-first traversal.
+   */
+  WebElement findFirstDescendantWidgetElementsOfType(WebElement context, String className);
 }

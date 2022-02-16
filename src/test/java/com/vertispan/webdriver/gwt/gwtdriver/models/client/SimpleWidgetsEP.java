@@ -18,39 +18,42 @@
 package com.vertispan.webdriver.gwt.gwtdriver.models.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.DialogBox;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
 public class SimpleWidgetsEP implements EntryPoint {
 
-  @Override
-  public void onModuleLoad() {
-
-    RootPanel.get().add(new Label("testing"));
-
-    FlowPanel panel = new FlowPanel();
-    RootPanel.get().add(panel);
-
-    final TextBox textBox = new TextBox();
-    textBox.setValue("asdf");
-    panel.add(textBox);
-
-    panel.add(new Button("Open dialog", new ClickHandler() {
-      @Override
-      public void onClick(ClickEvent event) {
-        DialogBox box = new DialogBox();
-        box.setText("Heading Text For Dialog");
-        box.add(new HTML(textBox.getValue()));
-        box.show();
-      }
-    }));
+  interface MyUiBinder extends UiBinder<Widget, SimpleWidgetsEP> {
   }
 
+  private MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
+
+  @UiField
+  TextBox textBox;
+
+  @Override
+  public void onModuleLoad() {
+    // outside of UiBinder
+    RootPanel.get().add(new Label("testing"));
+
+    // add UiBinder UI
+    RootPanel.get().add(uiBinder.createAndBindUi(this));
+  }
+
+  @UiHandler("openDialog")
+  void onOpenDialog(ClickEvent event) {
+    DialogBox box = new DialogBox();
+    box.setText("Heading Text For Dialog");
+    box.add(new HTML(textBox.getValue()));
+    box.show();
+  }
 }
