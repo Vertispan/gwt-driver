@@ -229,11 +229,10 @@ public class SimpleWidgetTest {
     WidgetContainer widget = new GwtRootPanel(driver);
     assert widget.as(GwtRootPanel.class) != null;
 
-    WebElement buttonlessPanel = driver.findElement(By.id("buttonless"));
     String messageInTimeout = "This will be in the timeout message";
 
     try {
-      GwtWidget.find(Button.class, driver, buttonlessPanel)
+      GwtWidget.find(Button.class, driver)
           .withText("Test Button Doesnt Exist")
           .waitFor(Duration.ofMillis(1), messageInTimeout);
       fail("This should fail when it doesn't find the widget");

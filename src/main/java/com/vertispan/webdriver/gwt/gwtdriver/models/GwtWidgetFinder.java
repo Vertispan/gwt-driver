@@ -31,6 +31,8 @@ import java.time.temporal.TemporalUnit;
 import java.util.function.Supplier;
 
 public class GwtWidgetFinder<W extends GwtWidget<?>> {
+  public static final Duration DEFAULT_WAITFOR_DURATION = Duration.ofSeconds(10);
+  
   protected WebDriver driver;
   protected WebElement elt;
 
@@ -66,7 +68,7 @@ public class GwtWidgetFinder<W extends GwtWidget<?>> {
   }
 
   public W waitFor(Supplier<String> messageSupplier) {
-    return waitFor(Duration.ofSeconds(10), messageSupplier);
+    return waitFor(DEFAULT_WAITFOR_DURATION, messageSupplier);
   }
 
   public W waitFor(long duration, TemporalUnit unit) {
