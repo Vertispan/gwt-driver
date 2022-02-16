@@ -38,11 +38,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 
+import java.time.Duration;
 import java.util.List;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -218,5 +220,24 @@ public class SimpleWidgetTest {
     // all labels
     assertEquals(5, elements.size());
     System.out.println(elements.size());
+  }
+
+  @Test
+  void waitTimeout() {
+    driver.get(url);
+
+    WidgetContainer widget = new GwtRootPanel(driver);
+    assert widget.as(GwtRootPanel.class) != null;
+
+    String messageInTimeout = "This will be in the timeout message";
+
+    try {
+      GwtWidget.find(Button.class, driver)
+          .withText("Test Button Doesnt Exist")
+          .waitFor(Duration.ofMillis(1), messageInTimeout);
+      fail("This should fail when it doesn't find the widget");
+    } catch (TimeoutException e) {
+      assertTrue(e.getMessage().contains(messageInTimeout));
+    }
   }
 }

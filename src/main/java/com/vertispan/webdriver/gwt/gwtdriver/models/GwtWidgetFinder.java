@@ -28,8 +28,11 @@ import org.openqa.selenium.support.ui.FluentWait;
 
 import java.time.Duration;
 import java.time.temporal.TemporalUnit;
+import java.util.function.Supplier;
 
 public class GwtWidgetFinder<W extends GwtWidget<?>> {
+  public static final Duration DEFAULT_WAITFOR_DURATION = Duration.ofSeconds(10);
+  
   protected WebDriver driver;
   protected WebElement elt;
 
@@ -57,7 +60,15 @@ public class GwtWidgetFinder<W extends GwtWidget<?>> {
   }
 
   public W waitFor() {
-    return waitFor(Duration.ofSeconds(10));
+    return waitFor((Supplier<String>) null);
+  }
+
+  public W waitFor(String message) {
+    return waitFor(message == null ? null : () -> message);
+  }
+
+  public W waitFor(Supplier<String> messageSupplier) {
+    return waitFor(DEFAULT_WAITFOR_DURATION, messageSupplier);
   }
 
   public W waitFor(long duration, TemporalUnit unit) {
@@ -65,8 +76,17 @@ public class GwtWidgetFinder<W extends GwtWidget<?>> {
   }
 
   public W waitFor(Duration duration) {
+    return waitFor(duration, (Supplier<String>) null);
+  }
+
+  public W waitFor(Duration duration, String message) {
+    return waitFor(duration, message == null ? null : () -> message);
+  }
+
+  public W waitFor(Duration duration, Supplier<String> messageSupplier) {
     return new FluentWait<>(driver)
         .withTimeout(duration)
+        .withMessage(messageSupplier)
         .ignoring(NotFoundException.class)
         .until((Function<WebDriver, W>) webDriver -> done());
   }
