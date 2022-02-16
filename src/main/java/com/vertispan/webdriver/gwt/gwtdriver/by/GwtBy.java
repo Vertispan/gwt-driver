@@ -1,6 +1,4 @@
 /*
- * Copyright 2013 Colin Alworth
- * Copyright 2012-2013 Sencha Labs
  * Copyright 2022 Vertispan LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
